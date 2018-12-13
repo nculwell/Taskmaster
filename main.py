@@ -7,11 +7,13 @@
 
 #import wxversion
 #wxversion.select("2.8")
-import wx, wx.html
+import wx, wx.html, wx.grid
 import sys
 
-aboutText = """<p>Sorry, there is no information about this program. It is
-running on version %(wxpy)s of <b>wxPython</b> and %(python)s of <b>Python</b>.
+aboutText = """<p>Sorry, there is no information about this program.
+
+It is running on version %(wxpy)s of <b>wxPython</b> and %(python)s of <b>Python</b>.
+
 See <a href="http://wiki.wxpython.org">wxPython Wiki</a></p>""" 
 
 class HtmlWindow(wx.html.HtmlWindow):
@@ -26,8 +28,7 @@ class HtmlWindow(wx.html.HtmlWindow):
 class AboutBox(wx.Dialog):
     def __init__(self):
         wx.Dialog.__init__(self, None, -1, "About <<project>>",
-            style=wx.DEFAULT_DIALOG_STYLE|wx.THICK_FRAME|wx.RESIZE_BORDER|
-                wx.TAB_TRAVERSAL)
+            style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.TAB_TRAVERSAL)
         hwin = HtmlWindow(self, -1, size=(400,200))
         vers = {}
         vers["python"] = sys.version.split()[0]
@@ -40,9 +41,29 @@ class AboutBox(wx.Dialog):
         self.CentreOnParent(wx.BOTH)
         self.SetFocus()
 
+class TaskGrid(wx.grid.Grid):
+    def __init__(self, parent, id=wx.ID_ANY):
+        wx.grid.Grid.__init__(self, parent, id=id, size=(400,300))
+        self.CreateGrid(100, 10)
+        self.SetRowSize(0, 60)
+        self.SetColSize(0, 120)
+
+        self.SetCellValue(0, 0, "wxGrid is good")
+
+        self.SetCellValue(0, 3, "This is read->only")
+        self.SetReadOnly(0, 3)
+
+        self.SetCellValue(3, 3, "green on gray")
+        self.SetCellTextColour(3, 3, wx.GREEN)
+        self.SetCellBackgroundColour(3, 3, wx.LIGHT_GREY)
+
+        self.SetColFormatFloat(5, 6, 2)
+        self.SetCellValue(0, 6, "3.1415")
+        return
+
 class Frame(wx.Frame):
     def __init__(self, title):
-        wx.Frame.__init__(self, None, title=title, pos=(150,150), size=(350,200))
+        wx.Frame.__init__(self, None, title=title) # , pos=(150,150), size=(350,200))
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         menuBar = wx.MenuBar()
@@ -69,6 +90,9 @@ class Frame(wx.Frame):
         m_close = wx.Button(panel, wx.ID_CLOSE, "Close")
         m_close.Bind(wx.EVT_BUTTON, self.OnClose)
         box.Add(m_close, 0, wx.ALL, 10)
+
+        grid = TaskGrid(panel)
+        box.Add(grid, 0, wx.ALL, 10)
         
         panel.SetSizer(box)
         panel.Layout()
