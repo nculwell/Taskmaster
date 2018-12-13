@@ -86,6 +86,7 @@ class TaskGrid(wx.grid.Grid):
         self.SetCellValue(index, 2, rowData["title"])
 
     def InsertRow(self, rowData, index = -1):
+        locker = wx.grid.GridUpdateLocker(self)
         newRowIndex = self.GetNumberRows()
         if index > newRowIndex:
             raise Exception("Inserted row index is greater than row count.")
@@ -130,7 +131,7 @@ class Frame(wx.Frame):
         box.Add(m_close, 0, wx.ALL, 10)
 
         grid = TaskGrid(panel)
-        box.Add(grid, 0, wx.ALL, 10)
+        box.Add(grid, 1, wx.ALL|wx.EXPAND, 10)
         
         panel.SetSizer(box)
         panel.Layout()
