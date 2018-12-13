@@ -44,9 +44,23 @@ class AboutBox(wx.Dialog):
 class TaskGrid(wx.grid.Grid):
     def __init__(self, parent, id=wx.ID_ANY):
         wx.grid.Grid.__init__(self, parent, id=id, size=(400,300))
-        self.CreateGrid(100, 10)
-        self.SetRowSize(0, 60)
-        self.SetColSize(0, 120)
+        self.CreateGrid(10, 6)
+        self.AutoSizeRows()
+        self.HideRowLabels()
+        self.SetColLabelValue(0, "ID")
+        self.SetColLabelValue(1, "Type")
+        self.SetColLabelValue(2, "Title")
+        self.AutoSizeColumns()
+        self.SetColSize(1, 120)
+
+        self.DisableCellEditControl()
+        self.DisableDragColMove()
+        self.DisableDragColSize()
+        self.DisableDragGridSize()
+        self.DisableDragRowSize()
+
+        self.DisableRowResize(0)
+        self.DisableColResize(0)
 
         self.SetCellValue(0, 0, "wxGrid is good")
 
@@ -56,10 +70,6 @@ class TaskGrid(wx.grid.Grid):
         self.SetCellValue(3, 3, "green on gray")
         self.SetCellTextColour(3, 3, wx.GREEN)
         self.SetCellBackgroundColour(3, 3, wx.LIGHT_GREY)
-
-        self.SetColFormatFloat(5, 6, 2)
-        self.SetCellValue(0, 6, "3.1415")
-        return
 
 class Frame(wx.Frame):
     def __init__(self, title):
