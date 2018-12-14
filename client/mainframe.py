@@ -4,27 +4,36 @@
 import wx, wx.html, wx.grid
 import sys
 from taskgrid import TaskGrid
+import defs, base
 
 aboutText = """
+<div>
 <p>Sorry, there is no information about this program.</p>
 <p>It is running on version %(wxpy)s of <b>wxPython</b> and %(python)s of <b>Python</b>.</p>
+</div>
 """
 
-userFullName = "Nathan Culwell-Kanarek [12345]"
-
 class HtmlWindow(wx.html.HtmlWindow):
-    def __init__(self, parent, id, size=(600,400)):
-        wx.html.HtmlWindow.__init__(self,parent, id, size=size)
+    import urllib, urllib.parse
+
+    def __init__(self, parent, id=wx.ID_ANY, size=(600,400)):
+        wx.html.HtmlWindow.__init__(self, parent, id, size=size)
         if "gtk2" in wx.PlatformInfo:
             self.SetStandardFonts()
 
     def OnLinkClicked(self, link):
-        wx.LaunchDefaultBrowser(link.GetHref())
+        href = link.GetHref()
+        url = urllib.parse.urlparse(href)
+        if url.scheme == 'self':
+            pass # TODO
+        elif url.scheme in ['http', 'https', 'ftp']:
+            wx.LaunchDefaultBrowser(href)
+        else:
+            parent.DispatchUrl(url)
 
-class AboutBox(wx.Dialog):
+class AboutBox(base.Dialog):
     def __init__(self, applicationName):
-        wx.Dialog.__init__(self, None, -1, "About " + applicationName,
-            style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER|wx.TAB_TRAVERSAL)
+        base.Dialog.__init__(self, None, "About " + applicationName)
         hwin = HtmlWindow(self, -1, size=(400,200))
         vers = {}
         vers["python"] = sys.version.split()[0]
@@ -37,10 +46,10 @@ class AboutBox(wx.Dialog):
         self.CentreOnParent(wx.BOTH)
         self.SetFocus()
 
-class MainFrame(wx.Frame):
+class MainFrame(base.Frame):
     def __init__(self, applicationName, initialTasks):
         try:
-            wx.Frame.__init__(self, None, title=applicationName) # , pos=(150,150), size=(350,200))
+            base.Frame.__init__(self, None, title=applicationName) # , pos=(150,150), size=(350,200))
             self.Bind(wx.EVT_CLOSE, self.OnClose)
             self.applicationName = applicationName
 
@@ -78,7 +87,7 @@ class MainFrame(wx.Frame):
 
     def BuildHeader(self, panel):
         box = wx.BoxSizer(wx.HORIZONTAL)
-        usernameText = wx.StaticText(panel, -1, userFullName)
+        usernameText = wx.StaticText(panel, -1, defs.UserFullName)
         usernameText.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))
         usernameText.SetSize(usernameText.GetBestSize())
         box.Add(usernameText, 0, wx.ALL, 10)
