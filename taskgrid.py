@@ -1,9 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import wx, wx.grid
+from task import *
 
 class TaskGrid(wx.grid.Grid):
-    def __init__(self, parent, data = {}, id = wx.ID_ANY):
+    def __init__(self, parent, tasks = [], id = wx.ID_ANY):
         wx.grid.Grid.__init__(self, parent, id=id, size=(400,300))
         try:
             self.CreateGrid(0, 3)
@@ -24,8 +25,8 @@ class TaskGrid(wx.grid.Grid):
             self.DisableRowResize(0)
             self.DisableColResize(0)
 
-            for dataRow in data:
-                self.InsertRow(dataRow)
+            for task in tasks:
+                self.InsertRow(task)
 
             #self.SetCellValue(3, 3, "green on gray")
             #self.SetCellTextColour(3, 3, wx.GREEN)
@@ -34,12 +35,12 @@ class TaskGrid(wx.grid.Grid):
         except Exception as e:
             print(e)
 
-    def UpdateRow(self, index, rowData):
-        self.SetCellValue(index, 0, rowData["id"])
-        self.SetCellValue(index, 1, rowData["type"])
-        self.SetCellValue(index, 2, rowData["title"])
+    def UpdateRow(self, index, task):
+        self.SetCellValue(index, 0, task.id)
+        self.SetCellValue(index, 1, task.type)
+        self.SetCellValue(index, 2, task.title)
 
-    def InsertRow(self, rowData, index = -1):
+    def InsertRow(self, task, index = -1):
         locker = wx.grid.GridUpdateLocker(self)
         newRowIndex = self.GetNumberRows()
         if index > newRowIndex:
@@ -47,7 +48,7 @@ class TaskGrid(wx.grid.Grid):
         self.AppendRows(1)
         for c in range(self.GetNumberCols()):
             self.SetReadOnly(newRowIndex, c)
-        self.UpdateRow(newRowIndex, rowData)
+        self.UpdateRow(newRowIndex, task)
         if index >= 0 and index < newRowIndex:
             self.MoveRow(newRowIndex, index)
 

@@ -1,28 +1,27 @@
-#!/usr/bin/python
-# -*- coding: <<encoding>> -*-
-#-------------------------------------------------------------------------------
-#   <<project>>
-# 
-#-------------------------------------------------------------------------------
+#!/usr/bin/python3
 
 #import wxversion
 #wxversion.select("2.8")
 import wx, wx.html, wx.grid
 import sys
 from taskgrid import TaskGrid
+from task import *
 
 applicationName = "TaskMaster"
 
-aboutText = """<p>Sorry, there is no information about this program.
+aboutText = """
+<p>Sorry, there is no information about this program.</p>
+<p>It is running on version %(wxpy)s of <b>wxPython</b> and %(python)s of <b>Python</b>.</p>
+"""
 
-It is running on version %(wxpy)s of <b>wxPython</b> and %(python)s of <b>Python</b>.
-
-See <a href="http://wiki.wxpython.org">wxPython Wiki</a></p>""" 
+userFullName = "Nathan Culwell-Kanarek [12345]"
 
 initialData = [
     { "id": "1", "type": "A", "title": "First" },
     { "id": "2", "type": "B", "title": "Second" },
 ]
+
+initialTasks = [ Task(t) for t in initialData ]
 
 class HtmlWindow(wx.html.HtmlWindow):
     def __init__(self, parent, id, size=(600,400)):
@@ -51,39 +50,49 @@ class AboutBox(wx.Dialog):
 
 class Frame(wx.Frame):
     def __init__(self, title):
-        wx.Frame.__init__(self, None, title=title) # , pos=(150,150), size=(350,200))
-        self.Bind(wx.EVT_CLOSE, self.OnClose)
+        try:
+            wx.Frame.__init__(self, None, title=title) # , pos=(150,150), size=(350,200))
+            self.Bind(wx.EVT_CLOSE, self.OnClose)
 
-        menuBar = wx.MenuBar()
-        menu = wx.Menu()
-        m_exit = menu.Append(wx.ID_EXIT, "E&xit\tAlt-X", "Close window and exit program.")
-        self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
-        menuBar.Append(menu, "&File")
-        menu = wx.Menu()
-        m_about = menu.Append(wx.ID_ABOUT, "&About", "Information about this program")
-        self.Bind(wx.EVT_MENU, self.OnAbout, m_about)
-        menuBar.Append(menu, "&Help")
-        self.SetMenuBar(menuBar)
-        
-        self.statusbar = self.CreateStatusBar()
+            menuBar = wx.MenuBar()
+            menu = wx.Menu()
+            m_exit = menu.Append(wx.ID_EXIT, "E&xit\tAlt-X", "Close window and exit program.")
+            self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
+            menuBar.Append(menu, "&File")
+            menu = wx.Menu()
+            m_about = menu.Append(wx.ID_ABOUT, "&About", "Information about this program")
+            self.Bind(wx.EVT_MENU, self.OnAbout, m_about)
+            menuBar.Append(menu, "&Help")
+            self.SetMenuBar(menuBar)
 
-        panel = wx.Panel(self)
-        box = wx.BoxSizer(wx.VERTICAL)
-        
-        m_text = wx.StaticText(panel, -1, "Hello World!")
-        m_text.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))
-        m_text.SetSize(m_text.GetBestSize())
-        box.Add(m_text, 0, wx.ALL, 10)
-        
-        m_close = wx.Button(panel, wx.ID_CLOSE, "Close")
-        m_close.Bind(wx.EVT_BUTTON, self.OnClose)
-        box.Add(m_close, 0, wx.ALL, 10)
+            self.statusbar = self.CreateStatusBar()
 
-        grid = TaskGrid(panel, data=initialData)
-        box.Add(grid, 1, wx.ALL|wx.EXPAND, 10)
-        
-        panel.SetSizer(box)
-        panel.Layout()
+            panel = wx.Panel(self)
+            box = wx.BoxSizer(wx.VERTICAL)
+
+            header = self.BuildHeader(panel)
+            box.Add(header, 0, wx.ALL, 10)
+
+            m_close = wx.Button(panel, wx.ID_CLOSE, "Close")
+            m_close.Bind(wx.EVT_BUTTON, self.OnClose)
+            box.Add(m_close, 0, wx.ALL, 10)
+
+            self.grid = TaskGrid(panel, tasks=initialTasks)
+            box.Add(self.grid, 1, wx.ALL|wx.EXPAND, 10)
+
+            panel.SetSizer(box)
+            panel.Layout()
+
+        except Exception as e:
+            print(e)
+
+    def BuildHeader(self, panel):
+        box = wx.BoxSizer(wx.HORIZONTAL)
+        usernameText = wx.StaticText(panel, -1, userFullName)
+        usernameText.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))
+        usernameText.SetSize(usernameText.GetBestSize())
+        box.Add(usernameText, 0, wx.ALL, 10)
+        return box
 
     def OnClose(self, event):
         dlg = wx.MessageDialog(self, 
