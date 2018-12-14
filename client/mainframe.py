@@ -13,6 +13,80 @@ aboutText = """
 </div>
 """
 
+class MainFrame(base.Frame):
+
+    def __init__(self, initialTasks):
+        try:
+            base.Frame.__init__(self, None, title=defs.AppName,
+                    pos=(50,50), size=(700,500))
+            self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+            menuBar = self.BuildMenuBar()
+            self.SetMenuBar(menuBar)
+            self.statusbar = self.CreateStatusBar()
+
+            self.panel = wx.Panel(self)
+            box = wx.BoxSizer(wx.VERTICAL)
+
+            header = self.BuildHeader()
+            box.Add(header, 0, wx.ALL, 10)
+
+            #closeButton = wx.Button(self.panel, wx.ID_CLOSE, "Close")
+            #closeButton.Bind(wx.EVT_BUTTON, self.OnClose)
+            #box.Add(closeButton, 0, wx.ALL, 10)
+
+            self.activity = TaskGrid(self.panel, tasks=initialTasks)
+            box.Add(self.activity, 1, wx.ALL|wx.EXPAND, 10)
+
+            self.panel.SetSizer(box)
+            self.panel.Layout()
+
+        except Exception as e:
+            print(e)
+
+    def LoadActivity(self, activity):
+        oldActivity = self.activity
+        self.activity = activity
+        box.Detach(oldActivity)
+        self.panel.Layout()
+
+    def BuildMenuBar(self):
+        menuBar = wx.MenuBar()
+
+        menu = wx.Menu()
+        m_exit = menu.Append(wx.ID_EXIT, "E&xit\tAlt-X", "Close window and exit program.")
+        self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
+        menuBar.Append(menu, "&File")
+
+        menu = wx.Menu()
+        m_about = menu.Append(wx.ID_ABOUT, "&About", "Information about this program")
+        self.Bind(wx.EVT_MENU, self.OnAbout, m_about)
+        menuBar.Append(menu, "&Help")
+
+        return menuBar
+
+    def BuildHeader(self):
+        box = wx.BoxSizer(wx.HORIZONTAL)
+        usernameText = wx.StaticText(self.panel, -1, defs.UserFullName)
+        usernameText.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))
+        usernameText.SetSize(usernameText.GetBestSize())
+        box.Add(usernameText, 0, wx.ALL, 0)
+        return box
+
+    def OnClose(self, event):
+        dlg = wx.MessageDialog(self, 
+            "Do you really want to close this application?",
+            "Confirm Exit", wx.OK|wx.CANCEL|wx.ICON_QUESTION)
+        result = dlg.ShowModal()
+        dlg.Destroy()
+        if result == wx.ID_OK:
+            self.Destroy()
+
+    def OnAbout(self, event):
+        dlg = AboutBox()
+        dlg.ShowModal()
+        dlg.Destroy()  
+
 class HtmlWindow(wx.html.HtmlWindow):
     import urllib, urllib.parse
 
@@ -45,70 +119,4 @@ class AboutBox(base.Dialog):
         self.SetClientSize(hwin.GetSize())
         self.CentreOnParent(wx.BOTH)
         self.SetFocus()
-
-class MainFrame(base.Frame):
-    def __init__(self, initialTasks):
-        try:
-            base.Frame.__init__(self, None, title=defs.AppName) # , pos=(150,150), size=(350,200))
-            self.Bind(wx.EVT_CLOSE, self.OnClose)
-
-            menuBar = self.BuildMenuBar()
-            self.SetMenuBar(menuBar)
-            self.statusbar = self.CreateStatusBar()
-
-            panel = wx.Panel(self)
-            box = wx.BoxSizer(wx.VERTICAL)
-
-            header = self.BuildHeader(panel)
-            box.Add(header, 0, wx.ALL, 10)
-
-            #closeButton = wx.Button(panel, wx.ID_CLOSE, "Close")
-            #closeButton.Bind(wx.EVT_BUTTON, self.OnClose)
-            #box.Add(closeButton, 0, wx.ALL, 10)
-
-            self.grid = TaskGrid(panel, tasks=initialTasks)
-            box.Add(self.grid, 1, wx.ALL|wx.EXPAND, 10)
-
-            panel.SetSizer(box)
-            panel.Layout()
-
-        except Exception as e:
-            print(e)
-
-    def BuildMenuBar(self):
-        menuBar = wx.MenuBar()
-
-        menu = wx.Menu()
-        m_exit = menu.Append(wx.ID_EXIT, "E&xit\tAlt-X", "Close window and exit program.")
-        self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
-        menuBar.Append(menu, "&File")
-
-        menu = wx.Menu()
-        m_about = menu.Append(wx.ID_ABOUT, "&About", "Information about this program")
-        self.Bind(wx.EVT_MENU, self.OnAbout, m_about)
-        menuBar.Append(menu, "&Help")
-
-        return menuBar
-
-    def BuildHeader(self, panel):
-        box = wx.BoxSizer(wx.HORIZONTAL)
-        usernameText = wx.StaticText(panel, -1, defs.UserFullName)
-        usernameText.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))
-        usernameText.SetSize(usernameText.GetBestSize())
-        box.Add(usernameText, 0, wx.ALL, 0)
-        return box
-
-    def OnClose(self, event):
-        dlg = wx.MessageDialog(self, 
-            "Do you really want to close this application?",
-            "Confirm Exit", wx.OK|wx.CANCEL|wx.ICON_QUESTION)
-        result = dlg.ShowModal()
-        dlg.Destroy()
-        if result == wx.ID_OK:
-            self.Destroy()
-
-    def OnAbout(self, event):
-        dlg = AboutBox()
-        dlg.ShowModal()
-        dlg.Destroy()  
 
