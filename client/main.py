@@ -18,7 +18,7 @@ initialData = [
 initialTasks = [ Task(t) for t in initialData ]
 
 app = wx.App(redirect=True)   # Error messages go to popup window
-top = mainframe.MainFrame(applicationName, initialTasks)
+top = mainframe.MainFrame(initialTasks)
 top.Show()
 app.MainLoop()
 

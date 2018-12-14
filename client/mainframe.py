@@ -16,8 +16,8 @@ aboutText = """
 class HtmlWindow(wx.html.HtmlWindow):
     import urllib, urllib.parse
 
-    def __init__(self, parent, id=wx.ID_ANY, size=(600,400)):
-        wx.html.HtmlWindow.__init__(self, parent, id, size=size)
+    def __init__(self, parent, size=(600,400)):
+        wx.html.HtmlWindow.__init__(self, parent, size=size)
         if "gtk2" in wx.PlatformInfo:
             self.SetStandardFonts()
 
@@ -32,9 +32,9 @@ class HtmlWindow(wx.html.HtmlWindow):
             parent.DispatchUrl(url)
 
 class AboutBox(base.Dialog):
-    def __init__(self, applicationName):
-        base.Dialog.__init__(self, None, "About " + applicationName)
-        hwin = HtmlWindow(self, -1, size=(400,200))
+    def __init__(self):
+        base.Dialog.__init__(self, None, "About " + defs.AppName)
+        hwin = HtmlWindow(self, size=(400,200))
         vers = {}
         vers["python"] = sys.version.split()[0]
         vers["wxpy"] = wx.VERSION_STRING
@@ -47,23 +47,13 @@ class AboutBox(base.Dialog):
         self.SetFocus()
 
 class MainFrame(base.Frame):
-    def __init__(self, applicationName, initialTasks):
+    def __init__(self, initialTasks):
         try:
-            base.Frame.__init__(self, None, title=applicationName) # , pos=(150,150), size=(350,200))
+            base.Frame.__init__(self, None, title=defs.AppName) # , pos=(150,150), size=(350,200))
             self.Bind(wx.EVT_CLOSE, self.OnClose)
-            self.applicationName = applicationName
 
-            menuBar = wx.MenuBar()
-            menu = wx.Menu()
-            m_exit = menu.Append(wx.ID_EXIT, "E&xit\tAlt-X", "Close window and exit program.")
-            self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
-            menuBar.Append(menu, "&File")
-            menu = wx.Menu()
-            m_about = menu.Append(wx.ID_ABOUT, "&About", "Information about this program")
-            self.Bind(wx.EVT_MENU, self.OnAbout, m_about)
-            menuBar.Append(menu, "&Help")
+            menuBar = self.BuildMenuBar()
             self.SetMenuBar(menuBar)
-
             self.statusbar = self.CreateStatusBar()
 
             panel = wx.Panel(self)
@@ -72,9 +62,9 @@ class MainFrame(base.Frame):
             header = self.BuildHeader(panel)
             box.Add(header, 0, wx.ALL, 10)
 
-            m_close = wx.Button(panel, wx.ID_CLOSE, "Close")
-            m_close.Bind(wx.EVT_BUTTON, self.OnClose)
-            box.Add(m_close, 0, wx.ALL, 10)
+            #closeButton = wx.Button(panel, wx.ID_CLOSE, "Close")
+            #closeButton.Bind(wx.EVT_BUTTON, self.OnClose)
+            #box.Add(closeButton, 0, wx.ALL, 10)
 
             self.grid = TaskGrid(panel, tasks=initialTasks)
             box.Add(self.grid, 1, wx.ALL|wx.EXPAND, 10)
@@ -85,12 +75,27 @@ class MainFrame(base.Frame):
         except Exception as e:
             print(e)
 
+    def BuildMenuBar(self):
+        menuBar = wx.MenuBar()
+
+        menu = wx.Menu()
+        m_exit = menu.Append(wx.ID_EXIT, "E&xit\tAlt-X", "Close window and exit program.")
+        self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
+        menuBar.Append(menu, "&File")
+
+        menu = wx.Menu()
+        m_about = menu.Append(wx.ID_ABOUT, "&About", "Information about this program")
+        self.Bind(wx.EVT_MENU, self.OnAbout, m_about)
+        menuBar.Append(menu, "&Help")
+
+        return menuBar
+
     def BuildHeader(self, panel):
         box = wx.BoxSizer(wx.HORIZONTAL)
         usernameText = wx.StaticText(panel, -1, defs.UserFullName)
         usernameText.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))
         usernameText.SetSize(usernameText.GetBestSize())
-        box.Add(usernameText, 0, wx.ALL, 10)
+        box.Add(usernameText, 0, wx.ALL, 0)
         return box
 
     def OnClose(self, event):
@@ -103,7 +108,7 @@ class MainFrame(base.Frame):
             self.Destroy()
 
     def OnAbout(self, event):
-        dlg = AboutBox(self.applicationName)
+        dlg = AboutBox()
         dlg.ShowModal()
         dlg.Destroy()  
 

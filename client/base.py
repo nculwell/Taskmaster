@@ -47,7 +47,7 @@ class EventHandlerWrapper:
 
     def __call__(self, evt):
         try:
-            if logEvents:
+            if self.logEvents:
                 pass # TODO: log event
             self.handlerFunction(evt)
         except Exception as e:
