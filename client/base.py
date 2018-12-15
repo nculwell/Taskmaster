@@ -2,7 +2,7 @@
 # vim: et ts=4 sts=4 sw=4 smartindent
 
 import wx, wx.html, wx.grid
-import sys, os
+import sys, os, traceback
 
 class Dialog(wx.Dialog):
 
@@ -51,5 +51,6 @@ class EventHandlerWrapper:
                 pass # TODO: log event
             self.handlerFunction(evt)
         except Exception as e:
-            print(e, file=sys.stderr)
+            traceback.print_exc()
+            #print(e, file=sys.stderr)
 

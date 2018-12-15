@@ -2,7 +2,7 @@
 # vim: et ts=4 sts=4 sw=4 smartindent
 
 import wx, wx.html, wx.grid
-import sys
+import sys, datetime
 from taskgrid import TaskGrid
 import defs, base
 
@@ -29,25 +29,27 @@ class MainFrame(base.Frame):
             box = wx.BoxSizer(wx.VERTICAL)
 
             header = self.BuildHeader()
-            box.Add(header, 0, wx.ALL, 10)
+            box.Add(header, 0, wx.ALL|wx.EXPAND, 10)
 
             #closeButton = wx.Button(self.panel, wx.ID_CLOSE, "Close")
             #closeButton.Bind(wx.EVT_BUTTON, self.OnClose)
             #box.Add(closeButton, 0, wx.ALL, 10)
 
-            self.activity = TaskGrid(self.panel, tasks=initialTasks)
-            box.Add(self.activity, 1, wx.ALL|wx.EXPAND, 10)
+            self.activity = None
+            self.activitySizer = wx.BoxSizer(wx.HORIZONTAL)
+            box.Add(self.activitySizer, 1, wx.ALL|wx.EXPAND, 10)
 
             self.panel.SetSizer(box)
-            self.panel.Layout()
+            self.LoadActivity(TaskGrid(self.panel, tasks=initialTasks))
 
         except Exception as e:
             print(e)
 
     def LoadActivity(self, activity):
-        oldActivity = self.activity
+        if self.activity != None:
+            self.activitySizer.Detach(self.activity)
         self.activity = activity
-        box.Detach(oldActivity)
+        self.activitySizer.Add(self.activity, 1, wx.ALL|wx.EXPAND, 0)
         self.panel.Layout()
 
     def BuildMenuBar(self):
@@ -71,6 +73,12 @@ class MainFrame(base.Frame):
         usernameText.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))
         usernameText.SetSize(usernameText.GetBestSize())
         box.Add(usernameText, 0, wx.ALL, 0)
+        box.Add(0, 0, 1) # stretchable empty space
+        todaysDate = datetime.datetime.today().strftime('%Y-%m-%d')
+        dateText = wx.StaticText(self.panel, -1, todaysDate)
+        dateText.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD))
+        dateText.SetSize(usernameText.GetBestSize())
+        box.Add(dateText, 0, wx.ALL, 0)
         return box
 
     def OnClose(self, event):
