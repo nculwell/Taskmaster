@@ -5,98 +5,101 @@ create table usr (
   deleted boolean not null default false,
   username varchar(32) not null,
   fullname varchar(128) not null,
+  create_inst timestamp not null default current_timestamp,
   primary key (id)
 );
 
-create table DocType (
+create table doc_type (
   id int,
   deleted boolean not null default false,
   name varchar(20) not null,
   primary key (id)
 );
 
-create table Doc (
+create table doc (
   id serial,
-  docTypeId int not null references DocType(id),
+  doc_type_id int not null references doc_type(id),
   body text not null,
+  create_inst timestamp not null default current_timestamp,
   primary key (id)
 );
 
-create table TaskType (
+create table task_type (
   id int,
   deleted boolean not null default false,
   name varchar(20) not null,
   primary key (id)
 );
 
-create table Task (
+create table tsk (
   id serial,
   deleted boolean not null default false,
-  taskTypeId int not null references TaskType(id),
+  tsk_type_id int not null references task_type(id),
   title varchar(128) not null,
-  descDocId int not null references Doc(id),
+  desc_doc_id int not null references doc(id),
+  create_inst timestamp not null default current_timestamp,
   primary key (id)
 );
 
-create table TaskUsrRole (
+create table tsk_usr_role (
   id int,
   deleted boolean not null default false,
   name varchar(20) not null,
   primary key (id)
 );
 
-create table TaskUsr (
-  taskId int not null references Task(id),
-  taskUsrRoleId int not null references TaskUsrRole(id),
-  userId int not null references usr(id),
-  primary key (taskId, taskUsrRoleId, userId)
+create table tsk_usr (
+  tsk_id int not null references tsk(id),
+  tsk_usr_role_id int not null references tsk_usr_role(id),
+  usr_id int not null references usr(id),
+  primary key (tsk_id, tsk_usr_role_id, usr_id)
 );
 
-create view VTask as
+create view v_tsk as
   select
-    t.id taskId, t.taskTypeId, tt.name taskTypeName
-  , t.title, t.descDocId
-  from Task t
-  join TaskType tt on tt.id = t.taskTypeId
+    t.id tsk_id, t.tsk_type_id, tt.name tsk_type_name
+  , t.title, t.desc_doc_id
+  from tsk t
+  join task_type tt on tt.id = t.tsk_type_id
   where not t.deleted
 ;
 
-create view VTaskUsr as
+create view v_tsk_usr as
   select t.*
-  , tu.taskUsrRoleId, tur.name taskUsrRoleName
-  , tu.userId, u.username, u.fullname
-  from VTask t
-  join TaskUsr tu on tu.taskId = t.taskId
-  join TaskUsrRole tur on tur.id = tu.taskUsrRoleId
-  join usr u on u.id = tu.userId
+  , tu.tsk_usr_role_id, tur.name tsk_usr_role_name
+  , tu.usr_id, u.username, u.fullname
+  from v_tsk t
+  join tsk_usr tu on tu.tsk_id = t.tsk_id
+  join tsk_usr_role tur on tur.id = tu.tsk_usr_role_id
+  join usr u on u.id = tu.usr_id
   where not u.deleted
 ;
 
-insert into TaskType (id, name) values (1, 'dev');
-insert into TaskType (id, name) values (2, 'bug');
-insert into DocType (id, name) values (1, 'task');
-insert into TaskUsrRole (id, name) values (1, 'dev');
-insert into TaskUsrRole (id, name) values (2, 'pqa');
-insert into TaskUsrRole (id, name) values (3, 'qa');
+insert into task_type (id, name) values (1, 'dev');
+insert into task_type (id, name) values (2, 'bug');
+insert into doc_type (id, name) values (1, 'task');
+insert into tsk_usr_role (id, name) values (1, 'dev');
+insert into tsk_usr_role (id, name) values (2, 'pqa');
+insert into tsk_usr_role (id, name) values (3, 'qa');
 
 do $$
 declare
-  userId int;
-  docId int;
-  taskId int;
+  usr_id int;
+  doc_id int;
+  tsk_id int;
 begin
   insert into usr (username, fullname)
     values ('njc', 'Nate C');
-  userId := currval(pg_get_serial_sequence('usr', 'id'));
-  insert into Doc (docTypeId, body)
+  usr_id := currval(pg_get_serial_sequence('usr', 'id'));
+  insert into doc (doc_type_id, body)
     values (1, 'My task.');
-  docId := currval(pg_get_serial_sequence('Doc', 'id'));
-  insert into Task (taskTypeId, title, descDocId)
-    values (1, 'First task', docId);
-  taskId := currval(pg_get_serial_sequence('Task', 'id'));
-  raise notice 'taskId: %', taskId;
-  insert into TaskUsr (taskId, taskUsrRoleId, userId)
-    values (taskId, 1, userId);
+  doc_id := currval(pg_get_serial_sequence('doc', 'id'));
+  insert into tsk (tsk_type_id, title, desc_doc_id)
+    values (1, 'First task', doc_id);
+  tsk_id := currval(pg_get_serial_sequence('tsk', 'id'));
+  raise notice 'tsk_id: %', tsk_id;
+  insert into tsk_usr (tsk_id, tsk_usr_role_id, usr_id)
+    values (tsk_id, 1, usr_id);
 end;
 $$
 
