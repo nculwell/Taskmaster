@@ -5,9 +5,10 @@ import pathlib
 import ssl
 import websockets
 
+SslKeyFile = 'insecure-pri.pem'
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain(
-    pathlib.Path(__file__).with_name('localhost.pem'))
+    pathlib.Path(__file__).with_name(SslKeyFile))
 
 async def hello(websocket, path):
     name = await websocket.recv()
