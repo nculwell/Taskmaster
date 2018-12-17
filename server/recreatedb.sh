@@ -1,4 +1,5 @@
 #!/bin/sh
 
-psql -f dropandcreatedb.sql
-psql -d taskmaster -f dbsetup.sql
+su postgres -c "psql -f dropandcreatedb.sql"
+su nate -c "psql -d taskmaster -f dbsetup.sql"
+
