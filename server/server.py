@@ -3,6 +3,7 @@
 
 import flask
 import psycopg2, psycopg2.extras
+import sys, os
 from pg import *
 
 TEST_SERVER_PORT=8257
@@ -10,8 +11,8 @@ TEST_LOCALHOST_ONLY=True
 
 app = flask.Flask(__name__)
 
-# FIXME! MOVE THE KEY OUT OF THE SOURCE CODE!
-app.secret_key = b'\x9f\t\x1c$\x88\xf0\xd0.\xed\x9d\x12\\&\xda\x8f\x97'
+# FIXME! CHOOSE A REAL SECRET KEY AND STORE IT PROPERLY
+app.secret_key = os.urandom(16)
 
 @app.route("/")
 def Home():
@@ -27,22 +28,23 @@ def Login():
         raise Exception("Password not found.")
     if DoLogin(username, password):
         flask.session['usr'] = username
+        return 'Welcome, %s.\r\n' % username
     else:
         flask.abort(401)
 
 def DoLogin(username, password):
     result = Query1("select * from usr where username = %s", username)
-    return False
+    return True 
 
 def CheckLogin():
-    username = flask.session.get('usr', '')
-    if len(username) == 0:
+    if not 'usr' in flask.session:
+        app.logger.debug("No username.")
         flask.abort(401)
 
 def InvokeService(function):
     CheckLogin()
     response = function()
-    return ToJson(respone)
+    return ToJson(response)
 
 @app.route('/user/<userId>')
 def GetUserRoute(userId):
@@ -50,7 +52,7 @@ def GetUserRoute(userId):
 
 def GetUser(userId):
     CheckLogin()
-    user = Query1("select * from VUser where userId = %s", userId)
+    user = Query1("select * from v_usr where usr_id = %s", userId)
     result = ResultToDict(user)
     return ToJson(result)
 
@@ -59,9 +61,9 @@ def GetTaskRoute(taskId):
     return InvokeService(lambda: GetTask(taskId))
 
 def GetTask(taskId):
-    task = Query1("select * from VTask where taskId = %s", taskId)
+    task = Query1("select * from v_tsk where tsk_id = %s", taskId)
     result = ResultToDict(task)
-    roles = Query("select * from VTaskUser where taskId = %s", taskId)
+    roles = Query("select * from v_tsk_usr where tsk_id = %s", taskId)
     result['roles'] = ResultsToDicts(roles)
     return result
 
@@ -70,7 +72,7 @@ def GetTasksByUserRoute(userId):
     return InvokeService(lambda: GetTasksByUser(taskId))
 
 def GetTasksByUser(userId):
-    results = Query("select * from VTaskUser where userId = %s", userId)
+    results = Query("select * from v_tsk_usr where user_id = %s", userId)
     return ResultsToDicts(results)
 
 if __name__ == "__main__":

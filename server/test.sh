@@ -7,5 +7,16 @@ USR=njc
 PWD=xxx
 URL=http://localhost:$PORT
 
-curl -F "usr=$USR" -F "pwd=$PWD" $URL/login
+CJ=cookiejar.txt
+
+req() {
+  echo "$@"
+  curl -b "$CJ" -c "$CJ" "$@"
+}
+
+echo login
+req -j -F "usr=$USR" -F "pwd=$PWD" "$URL/login"
+
+echo task
+req "$URL/task/1"
 
