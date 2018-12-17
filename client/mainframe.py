@@ -4,6 +4,7 @@
 import wx, wx.html, wx.grid
 import sys, datetime
 from taskgrid import TaskGrid
+from login import LoginActivity
 import defs, base
 
 aboutText = """
@@ -17,33 +18,37 @@ class MainFrame(base.Frame):
 
     def __init__(self, initialTasks):
         try:
+            self.initialTasks = initialTasks
             base.Frame.__init__(self, None, title=defs.AppName,
                     pos=(50,50), size=(700,500))
-            self.Bind(wx.EVT_CLOSE, self.OnClose)
-
-            menuBar = self.BuildMenuBar()
-            self.SetMenuBar(menuBar)
-            self.statusbar = self.CreateStatusBar()
-
-            self.panel = wx.Panel(self)
-            box = wx.BoxSizer(wx.VERTICAL)
-
-            header = self.BuildHeader()
-            box.Add(header, 0, wx.ALL|wx.EXPAND, 10)
-
-            #closeButton = wx.Button(self.panel, wx.ID_CLOSE, "Close")
-            #closeButton.Bind(wx.EVT_BUTTON, self.OnClose)
-            #box.Add(closeButton, 0, wx.ALL, 10)
-
-            self.activity = None
-            self.activitySizer = wx.BoxSizer(wx.HORIZONTAL)
-            box.Add(self.activitySizer, 1, wx.ALL|wx.EXPAND, 10)
-
-            self.panel.SetSizer(box)
-            self.LoadActivity(TaskGrid(self.panel, tasks=initialTasks))
-
         except Exception as e:
-            print(e)
+            traceback.print_exc()
+
+    def Construct(self):
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
+
+        menuBar = self.BuildMenuBar()
+        self.SetMenuBar(menuBar)
+        self.statusbar = self.CreateStatusBar()
+
+        self.panel = wx.Panel(self)
+        box = wx.BoxSizer(wx.VERTICAL)
+
+        header = self.BuildHeader()
+        box.Add(header, 0, wx.ALL|wx.EXPAND, 10)
+
+        #closeButton = wx.Button(self.panel, wx.ID_CLOSE, "Close")
+        #closeButton.Bind(wx.EVT_BUTTON, self.OnClose)
+        #box.Add(closeButton, 0, wx.ALL, 10)
+
+        self.activity = None
+        self.activitySizer = wx.BoxSizer(wx.HORIZONTAL)
+        box.Add(self.activitySizer, 1, wx.ALL|wx.EXPAND, 10)
+
+        self.panel.SetSizer(box)
+        self.LoadActivity(LoginActivity(self.panel))
+        #self.LoadActivity(TaskGrid(self.panel, tasks=self.initialTasks))
+        del self.initialTasks
 
     def LoadActivity(self, activity):
         if self.activity != None:
@@ -77,7 +82,7 @@ class MainFrame(base.Frame):
         todaysDate = datetime.datetime.today().strftime('%Y-%m-%d')
         dateText = wx.StaticText(self.panel, -1, todaysDate)
         dateText.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD))
-        dateText.SetSize(usernameText.GetBestSize())
+        dateText.SetSize(dateText.GetBestSize())
         box.Add(dateText, 0, wx.ALL, 0)
         return box
 
@@ -114,8 +119,11 @@ class HtmlWindow(wx.html.HtmlWindow):
             parent.DispatchUrl(url)
 
 class AboutBox(base.Dialog):
+
     def __init__(self):
         base.Dialog.__init__(self, None, "About " + defs.AppName)
+
+    def Construct(self):
         hwin = HtmlWindow(self, size=(400,200))
         vers = {}
         vers["python"] = sys.version.split()[0]

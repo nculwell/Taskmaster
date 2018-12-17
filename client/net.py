@@ -31,12 +31,12 @@ session = {
 def CallService(path):
     urlPrefix = "%s://%s:%d/" % (session['scheme'], session['host'], session['port'])
     if session['opener'] == None:
-        Login(urlPrefix)
+        _Login(urlPrefix)
     with session['opener'].open(urlPrefix + path) as f:
         responseJson = f.read().decode('utf-8')
     return json.loads(responseJson)
 
-def Login(urlPrefix):
+def _Login(urlPrefix):
     session['opener'] = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(session['cj']))
     loginData = urllib.parse.urlencode({'usr': 'njc', 'pwd': 'xxx'})
     with session['opener'].open(urlPrefix + 'login', loginData.encode('utf8')) as f:
