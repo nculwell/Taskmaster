@@ -12,6 +12,9 @@ def _Connect():
             cursor_factory=psycopg2.extras.DictCursor)
     return conn
 
+class EntityNotFoundException(Exception):
+    pass
+
 def Query(sql, params=()):
     params = _FixParams(params)
     conn = _Connect()
@@ -33,6 +36,8 @@ def Query1(sql, params=()):
         cur.execute(sql, params)
         row = cur.fetchone()
         cur.close()
+        if row == None:
+            raise EntityNotFoundException(sql, params)
         return row
     finally:
         conn.close()

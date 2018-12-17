@@ -3,7 +3,7 @@
 
 import flask
 import psycopg2, psycopg2.extras
-import sys, os
+import sys, os, traceback
 from pg import *
 
 TEST_SERVER_PORT=8257
@@ -28,7 +28,7 @@ def Login():
         raise Exception("Password not found.")
     if DoLogin(username, password):
         flask.session['usr'] = username
-        return 'Welcome, %s.\r\n' % username
+        return 'Welcome, %s.' % username
     else:
         flask.abort(401)
 
@@ -43,7 +43,11 @@ def CheckLogin():
 
 def InvokeService(function):
     CheckLogin()
-    response = function()
+    try:
+        response = function()
+    except EntityNotFoundException as e:
+        traceback.print_exc()
+        flask.abort(404, "Entity not found.")
     return ToJson(response)
 
 @app.route('/user/<userId>')
@@ -52,7 +56,7 @@ def GetUserRoute(userId):
 
 def GetUser(userId):
     CheckLogin()
-    user = Query1("select * from v_usr where usr_id = %s", userId)
+    user = Query1("select * from usr where id = %s", userId)
     result = ResultToDict(user)
     return ToJson(result)
 
@@ -69,10 +73,10 @@ def GetTask(taskId):
 
 @app.route('/task/user/<userId>')
 def GetTasksByUserRoute(userId):
-    return InvokeService(lambda: GetTasksByUser(taskId))
+    return InvokeService(lambda: GetTasksByUser(userId))
 
 def GetTasksByUser(userId):
-    results = Query("select * from v_tsk_usr where user_id = %s", userId)
+    results = Query("select * from v_tsk_usr where usr_id = %s", userId)
     return ResultsToDicts(results)
 
 if __name__ == "__main__":
