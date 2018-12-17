@@ -3,9 +3,10 @@
 
 import flask
 import psycopg2, psycopg2.extras
-import json
+from pg import *
 
-PORT=8257
+TEST_SERVER_PORT=8257
+TEST_LOCALHOST_ONLY=True
 
 app = flask.Flask(__name__)
 
@@ -30,7 +31,7 @@ def Login():
         flask.abort(401)
 
 def DoLogin(username, password):
-    result = Query1("select * from usr where id = %s", username)
+    result = Query1("select * from usr where username = %s", username)
     return False
 
 def CheckLogin():
@@ -38,52 +39,10 @@ def CheckLogin():
     if len(username) == 0:
         flask.abort(401)
 
-def Connect():
-    conn = psycopg2.connect(
-            host="localhost", database="taskmaster",
-            cursor_factory=psycopg2.extras.DictCursor)
-    return conn
-
-def Query(sql, params=()):
-    params = FixParams(params)
-    conn = Connect()
-    try:
-        cur = conn.cursor()
-        cur.execute(sql, params)
-        rows = cur.fetchall()
-        rowCount = cur.rowcount
-        cur.close()
-        return rows
-    finally:
-        conn.close()
-
-def Query1(sql, params=()):
-    params = FixParams(params)
-    conn = Connect()
-    try:
-        cur = conn.cursor()
-        cur.execute(sql, params)
-        row = cur.fetchone()
-        cur.close()
-        return row
-    finally:
-        conn.close()
-
-def ResultToDict(result):
-    return { k: v for k, v in result.items() }
-
-def ResultsToDicts(results):
-    return ( ResultToDict(r) for r in results )
-
-def FixParams(params):
-    if isinstance(params, list) or isinstance(params, tuple):
-        return params
-    return (params,)
-
 def InvokeService(function):
     CheckLogin()
     response = function()
-    return json.dumps(respone)
+    return ToJson(respone)
 
 @app.route('/user/<userId>')
 def GetUserRoute(userId):
@@ -93,7 +52,7 @@ def GetUser(userId):
     CheckLogin()
     user = Query1("select * from VUser where userId = %s", userId)
     result = ResultToDict(user)
-    return json.dumps(result)
+    return ToJson(result)
 
 @app.route('/task/<taskId>')
 def GetTaskRoute(taskId):
@@ -115,5 +74,6 @@ def GetTasksByUser(userId):
     return ResultsToDicts(results)
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=PORT)
+    host = '127.0.0.1' if TEST_LOCALHOST_ONLY else '0.0.0.0'
+    app.run(host=host, port=TEST_SERVER_PORT)
 

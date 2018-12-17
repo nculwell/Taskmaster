@@ -48,14 +48,18 @@ def _FixParams(params):
         return params
     return (params,)
 
-class JSONEncoder(json.JSONEncoder):
+class _JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, datetime.datetime):
             return o.isoformat(' ')[:19]
         return json.JSONEncoder.default(self, o)
 
+def ToJson(x):
+    j = json.dumps(x, cls=_JSONEncoder)
+    return j
+
 if __name__ == "__main__":
     r = Query("select * from usr")
-    j = json.dumps(ResultsToDicts(r), cls=JSONEncoder)
+    j = ToJson(ResultsToDicts(r))
     print(j)
 
