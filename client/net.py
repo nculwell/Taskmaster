@@ -31,13 +31,16 @@ session = {
 def CallService(path):
     urlPrefix = "%s://%s:%d/" % (session['scheme'], session['host'], session['port'])
     if session['opener'] == None:
-        session['opener'] = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(session['cj']))
-        loginData = urllib.parse.urlencode({'usr': 'njc', 'pwd': 'xxx'})
-        with session['opener'].open(urlPrefix + 'login', loginData.encode('utf8')) as f:
-            loginResponse = f.read().decode('utf-8')
+        Login(urlPrefix)
     with session['opener'].open(urlPrefix + path) as f:
         responseJson = f.read().decode('utf-8')
     return json.loads(responseJson)
+
+def Login(urlPrefix):
+    session['opener'] = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(session['cj']))
+    loginData = urllib.parse.urlencode({'usr': 'njc', 'pwd': 'xxx'})
+    with session['opener'].open(urlPrefix + 'login', loginData.encode('utf8')) as f:
+        loginResponse = f.read().decode('utf-8')
 
 if __name__ == "__main__":
     r = CallService("user/1")
