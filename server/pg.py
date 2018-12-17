@@ -2,17 +2,19 @@
 # vim: ts=4 sts=4 sw=4 et smartindent
 
 import psycopg2, psycopg2.extras
-import json
+import json, datetime
 
-def Connect():
+PGPORT=5433
+
+def _Connect():
     conn = psycopg2.connect(
-            host="localhost", database="taskmaster",
+            dbname="taskmaster", port=PGPORT,
             cursor_factory=psycopg2.extras.DictCursor)
     return conn
 
 def Query(sql, params=()):
-    params = FixParams(params)
-    conn = Connect()
+    params = _FixParams(params)
+    conn = _Connect()
     try:
         cur = conn.cursor()
         cur.execute(sql, params)
@@ -24,8 +26,8 @@ def Query(sql, params=()):
         conn.close()
 
 def Query1(sql, params=()):
-    params = FixParams(params)
-    conn = Connect()
+    params = _FixParams(params)
+    conn = _Connect()
     try:
         cur = conn.cursor()
         cur.execute(sql, params)
@@ -39,13 +41,21 @@ def ResultToDict(result):
     return { k: v for k, v in result.items() }
 
 def ResultsToDicts(results):
-    return ( ResultToDict(r) for r in results )
+    return [ ResultToDict(r) for r in results ]
 
-def FixParams(params):
+def _FixParams(params):
     if isinstance(params, list) or isinstance(params, tuple):
         return params
     return (params,)
 
+class JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime.datetime):
+            return o.isoformat(' ')[:19]
+        return json.JSONEncoder.default(self, o)
+
 if __name__ == "__main__":
     r = Query("select * from usr")
+    j = json.dumps(ResultsToDicts(r), cls=JSONEncoder)
+    print(j)
 
