@@ -1,18 +1,23 @@
 #!/usr/bin/python3
 # vim: et ts=8 sts=4 sw=4
 
-import wx
-import sys, re
+import wx, wx.lib.newevent
+import sys, re, traceback
 import base, net, color
 
 LABEL_WIDTH = 200
 
+LoginEvent, EVT_LOGIN = wx.lib.newevent.NewEvent()
+
 class LoginActivity(base.Activity):
 
-    def __init__(self, parent, id = wx.ID_ANY):
+    def __init__(self, parent, id = wx.ID_ANY, onLogin = None):
+        self.LoginSuccess = onLogin
         base.Activity.__init__(self, parent, id)
 
     def Construct(self):
+        self.Bind(EVT_LOGIN, self.LoginSuccess)
+        
         box = wx.BoxSizer(wx.VERTICAL)
         self.SetSizer(box)
         box.Add(0, 0, 1) # stretchable empty space
@@ -63,18 +68,23 @@ class LoginActivity(base.Activity):
     def OnLogin(self, event):
         username = self.form.fields['username'].GetText()
         password = self.form.fields['password'].GetText()
-        response = net.Login(username, password)
-        print("LOGIN: %s, %s. RESPONSE: %s" % (username, password, response), file=sys.stderr)
-        if response.startswith("Welcome,"):
-            self.LoginSuccess()
-        else:
-            self.LoginFailure()
+        try:
+            loginUsr = net.Login(username, password)
+        except Exception as e:
+            self.LoginFailure(str(e))
+            return
+        print("LOGIN: %s, %s. RESPONSE: %s" % (username, password, loginUsr), file=sys.stderr)
+        #self.LoginSuccess(loginUsr)
+        wx.PostEvent(self, LoginEvent(usr=loginUsr))
 
-    def LoginSuccess(self, username, password):
-        parent.Login(username)
+    #def LoginSuccess(self, loginUsr):
+    #    print("Raising login event.")
+    #    wx.PostEvent(self, LoginEvent(usr=loginUsr))
+    #    print("Raised login event.")
 
-    def LoginFailure(self):
-        self.errMsg.SetLabelText("LOGIN FAILED")
+    def LoginFailure(self, message=''):
+        self.errMsg.SetLabelText("LOGIN FAILED" if message=='' else message)
+        self.GetParent().Layout()
 
 class UsernameValidator(wx.Validator):
     def __init__(self):

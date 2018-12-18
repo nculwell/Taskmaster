@@ -46,13 +46,14 @@ class MainFrame(base.Frame):
         box.Add(self.activitySizer, 1, wx.ALL|wx.EXPAND, 10)
 
         self.panel.SetSizer(box)
-        self.LoadActivity(LoginActivity(self.panel))
+        self.LoadActivity(LoginActivity(self.panel, onLogin=self.OnLogin))
         #self.LoadActivity(TaskGrid(self.panel, tasks=self.initialTasks))
-        del self.initialTasks
+        #del self.initialTasks
 
     def LoadActivity(self, activity):
         if self.activity != None:
             self.activitySizer.Detach(self.activity)
+            self.activity.Destroy()
         self.activity = activity
         self.activitySizer.Add(self.activity, 1, wx.ALL|wx.EXPAND, 0)
         self.panel.Layout()
@@ -74,10 +75,10 @@ class MainFrame(base.Frame):
 
     def BuildHeader(self):
         box = wx.BoxSizer(wx.HORIZONTAL)
-        usernameText = wx.StaticText(self.panel, -1, defs.UserFullName)
-        usernameText.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))
-        usernameText.SetSize(usernameText.GetBestSize())
-        box.Add(usernameText, 0, wx.ALL, 0)
+        self.usernameText = wx.StaticText(self.panel, -1, defs.UserFullName)
+        self.usernameText.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))
+        self.usernameText.SetSize(self.usernameText.GetBestSize())
+        box.Add(self.usernameText, 0, wx.ALL, 0)
         box.Add(0, 0, 1) # stretchable empty space
         todaysDate = datetime.datetime.today().strftime('%Y-%m-%d')
         dateText = wx.StaticText(self.panel, -1, todaysDate)
@@ -99,6 +100,13 @@ class MainFrame(base.Frame):
         dlg = AboutBox()
         dlg.ShowModal()
         dlg.Destroy()
+
+    def OnLogin(self, e):
+        print("Handling login event:", e.usr)
+        self.loginUsr = e.usr
+        id, username, fullname = e.usr['id'], e.usr['username'], e.usr['fullname']
+        self.usernameText.SetLabelText('%s [%d]' % (fullname, id))
+        self.LoadActivity(TaskGrid(self.panel, tasks=self.initialTasks))
 
 class HtmlWindow(wx.html.HtmlWindow):
     import urllib, urllib.parse

@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# vim: et ts=4 sts=4 sw=4 smartindent
+# vim: et ts=8 sts=4 sw=4
 
 #import http.client
 import http.cookiejar, urllib.request
@@ -28,12 +28,19 @@ session = {
 #    print(r1.status, r1.reason)
 #    data1 = r1.read()  # This will return entire content.
 
+def GetOpener():
+    opener = session.get('opener', None)
+    if opener is None:
+        opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(session['cj']))
+        session['opener'] = opener
+    return opener
+
 def CallService(path):
-    if session['opener'] == None:
-        _Login()
-    with session['opener'].open(_Url(path)) as f:
+    with GetOpener().open(_Url(path)) as f:
         responseJson = f.read().decode('utf-8')
-    # TODO: Login again if unauthorized.
+    # TODO: Login again (with saved username/password) if unauthorized.
+    # If this login attempt also fails, raise an exception that brings
+    # up the login screen.
     return json.loads(responseJson)
 
 def Login(username, password):
@@ -44,11 +51,10 @@ def Login(username, password):
 def _Login():
     usr = session['username']
     pwd = session['password']
-    session['opener'] = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(session['cj']))
     loginData = urllib.parse.urlencode({'usr': usr, 'pwd': pwd})
-    with session['opener'].open(_Url('login'), loginData.encode('utf8')) as f:
+    with GetOpener().open(_Url('login'), loginData.encode('utf8')) as f:
         loginResponse = f.read().decode('utf-8')
-    return loginResponse
+    return json.loads(loginResponse)
 
 def _Url(path):
     prefix = "%s://%s:%d/" % (session['scheme'], session['host'], session['port'])
