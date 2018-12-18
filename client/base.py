@@ -3,6 +3,7 @@
 
 import wx, wx.html, wx.grid
 import sys, os, traceback
+import color
 
 class Dialog(wx.Dialog):
 
@@ -92,7 +93,7 @@ class Form(wx.Control):
             else:
                 entry = wx.TextCtrl(self, value=entryValue, style=teStyle, validator=validator)
             errMsg = wx.StaticText(self, -1, '')
-            errMsg.SetForegroundColour(wx.Colour(0xFF, 0, 0))
+            errMsg.SetForegroundColour(color.ERRMSG)
             addFlag = wx.ALL|wx.ALIGN_CENTER_VERTICAL
             fgs.Add(label, flag=addFlag)
             fgs.Add(entry, flag=addFlag|wx.EXPAND)

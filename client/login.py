@@ -2,8 +2,8 @@
 # vim: et ts=8 sts=4 sw=4
 
 import wx
-import base
 import sys, re
+import base, net, color
 
 LABEL_WIDTH = 200
 
@@ -34,6 +34,10 @@ class LoginActivity(base.Activity):
         submitButton.SetDefault()
         box.Add(submitButton, 0, wx.ALL|wx.CENTER, 10)
 
+        self.errMsg = wx.StaticText(self, wx.ID_ANY, "(ERROR)")
+        self.errMsg.SetForegroundColour(color.ERRMSG)
+        box.Add(self.errMsg, 0, wx.ALL|wx.CENTER, 10)
+
         box.Add(0, 0, 1) # stretchable empty space
 
     def UpdateRow(self, index, task):
@@ -59,8 +63,18 @@ class LoginActivity(base.Activity):
     def OnLogin(self, event):
         username = self.form.fields['username'].GetText()
         password = self.form.fields['password'].GetText()
-        print("LOGGED IN: %s, %s" % (username, password), file=sys.stderr)
-        pass # TODO
+        response = net.Login(username, password)
+        print("LOGIN: %s, %s. RESPONSE: %s" % (username, password, response), file=sys.stderr)
+        if response.startswith("Welcome,"):
+            self.LoginSuccess()
+        else:
+            self.LoginFailure()
+
+    def LoginSuccess(self, username, password):
+        parent.Login(username)
+
+    def LoginFailure(self):
+        self.errMsg.SetLabelText("LOGIN FAILED")
 
 class UsernameValidator(wx.Validator):
     def __init__(self):

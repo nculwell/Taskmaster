@@ -87,7 +87,7 @@ class MainFrame(base.Frame):
         return box
 
     def OnClose(self, event):
-        dlg = wx.MessageDialog(self, 
+        dlg = wx.MessageDialog(self,
             "Do you really want to close this application?",
             "Confirm Exit", wx.OK|wx.CANCEL|wx.ICON_QUESTION)
         result = dlg.ShowModal()
@@ -98,7 +98,7 @@ class MainFrame(base.Frame):
     def OnAbout(self, event):
         dlg = AboutBox()
         dlg.ShowModal()
-        dlg.Destroy()  
+        dlg.Destroy()
 
 class HtmlWindow(wx.html.HtmlWindow):
     import urllib, urllib.parse

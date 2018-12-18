@@ -29,18 +29,30 @@ session = {
 #    data1 = r1.read()  # This will return entire content.
 
 def CallService(path):
-    urlPrefix = "%s://%s:%d/" % (session['scheme'], session['host'], session['port'])
     if session['opener'] == None:
-        _Login(urlPrefix)
-    with session['opener'].open(urlPrefix + path) as f:
+        _Login()
+    with session['opener'].open(_Url(path)) as f:
         responseJson = f.read().decode('utf-8')
+    # TODO: Login again if unauthorized.
     return json.loads(responseJson)
 
-def _Login(urlPrefix):
+def Login(username, password):
+    session['username'] = username
+    session['password'] = password
+    return _Login()
+
+def _Login():
+    usr = session['username']
+    pwd = session['password']
     session['opener'] = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(session['cj']))
-    loginData = urllib.parse.urlencode({'usr': 'njc', 'pwd': 'xxx'})
-    with session['opener'].open(urlPrefix + 'login', loginData.encode('utf8')) as f:
+    loginData = urllib.parse.urlencode({'usr': usr, 'pwd': pwd})
+    with session['opener'].open(_Url('login'), loginData.encode('utf8')) as f:
         loginResponse = f.read().decode('utf-8')
+    return loginResponse
+
+def _Url(path):
+    prefix = "%s://%s:%d/" % (session['scheme'], session['host'], session['port'])
+    return prefix + path
 
 if __name__ == "__main__":
     r = CallService("user/1")
