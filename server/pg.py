@@ -5,6 +5,7 @@ import psycopg2, psycopg2.extras
 import json, datetime
 
 PGPORT=5433
+DEBUG_PRINT=False
 
 def _Connect():
     conn = psycopg2.connect(
@@ -21,6 +22,9 @@ def Query(sql, params=()):
     try:
         cur = conn.cursor()
         cur.execute(sql, params)
+        if DEBUG_PRINT:
+            print(cur.query)
+            print(cur.statusmessage)
         rows = cur.fetchall()
         rowCount = cur.rowcount
         cur.close()
@@ -34,11 +38,36 @@ def Query1(sql, params=()):
     try:
         cur = conn.cursor()
         cur.execute(sql, params)
+        if DEBUG_PRINT:
+            print(cur.query)
+            print(cur.statusmessage)
         row = cur.fetchone()
         cur.close()
         if row == None:
             raise EntityNotFoundException(sql, params)
         return row
+    finally:
+        conn.close()
+
+def Insert(tableName, colVals):
+    cols = [ cv[0] for cv in colVals ]
+    vals = [ cv[1] for cv in colVals ]
+    sql = 'insert into %s (%s) values (%s)' % (
+        tableName, ', '.join(cols),
+        ', '.join('%s' for x in range(len(vals)))
+    )
+    #print(sql + ' -- ' + '; '.join((str(v) for v in vals)))
+    conn = _Connect()
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, vals)
+        if DEBUG_PRINT:
+            print(cur.query)
+            print(cur.statusmessage)
+        rowcount = cur.rowcount
+        cur.close()
+        conn.commit()
+        return rowcount
     finally:
         conn.close()
 
@@ -64,6 +93,15 @@ def ToJson(x):
     return j
 
 if __name__ == "__main__":
+    DEBUG_PRINT=True
+    r = Query("select * from usr")
+    j = ToJson(ResultsToDicts(r))
+    print(j)
+    r = Query1("select * from tsk limit 1")
+    j = ToJson(ResultToDict(r))
+    print(j)
+    rc = Insert('usr', (('username', 'msa'), ('fullname', 'Marison A'),))
+    print("Insert usr OK: %d rows affected" % rc)
     r = Query("select * from usr")
     j = ToJson(ResultsToDicts(r))
     print(j)

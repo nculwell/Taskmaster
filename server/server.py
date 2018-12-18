@@ -1,13 +1,17 @@
 #!/usr/bin/python3
-# vim: ts=4 sts=4 sw=4 et smartindent
+# vim: et ts=8 sts=4 sw=4
 
 import flask
 import psycopg2, psycopg2.extras
-import sys, os, traceback
+import sys, os, traceback, hashlib
 from pg import *
 
 TEST_SERVER_PORT=8257
 TEST_LOCALHOST_ONLY=True
+
+PASSWORD_HASH = 'sha256'
+PASSWORD_SALT_BYTES = 16
+PASSWORD_ITERATIONS_THOUSANDS = 200
 
 app = flask.Flask(__name__)
 
@@ -26,15 +30,44 @@ def Login():
         raise Exception("Username not found.")
     if password == '':
         raise Exception("Password not found.")
-    if DoLogin(username, password):
-        flask.session['usr'] = username
-        return 'Welcome, %s.' % username
-    else:
+    loginUsr = DoLogin(username, password)
+    if loginUsr is None:
         flask.abort(401)
+    else:
+        flask.session['usr'] = username
+        return loginUsr
 
 def DoLogin(username, password):
-    result = Query1("select * from usr where username = %s", username)
-    return True 
+    try:
+        usr = Query1("select * from usr where username = %s", username)
+    except EntityNotFoundException:
+        return None
+    p = Query1("""
+        select p.* from pwd p where p.usr_id = %s
+        order by p.create_inst desc limit 1
+    """, usr.id)
+    if not VerifyPassword(p['method'], p['salt'], p['hash'], password):
+        return None
+    return usr
+
+def VerifyPassword(method, salt, storedHash, suppliedPassword):
+    hashName, iterations = method.split(':')
+    its = int(iterations) * 1000
+    attempt = hashlib.pbkdf2_hmac(hashName, suppliedPassword, salt, its)
+    return attempt == storedHash
+
+def StorePassword(usrId, password):
+    hashName = PASSWORD_HASH
+    binaryPassword = password.encode('utf-8')
+    salt = os.urandom(PASSWORD_SALT_BYTES)
+    iterations = PASSWORD_ITERATIONS_THOUSANDS * 1000
+    hash = hashlib.pbkdf2_hmac(hashName, binaryPassword, salt, iterations)
+    Insert('pwd', (
+            ('usr_id', usrId),
+            ('method', hashName + ':' + str(PASSWORD_ITERATIONS_THOUSANDS)),
+            ('salt', salt),
+            ('hash', hash),
+        ))
 
 def CheckLogin():
     if not 'usr' in flask.session:
@@ -56,8 +89,8 @@ def GetUserRoute(userId):
 
 def GetUser(userId):
     CheckLogin()
-    user = Query1("select * from usr where id = %s", userId)
-    result = ResultToDict(user)
+    usr = Query1("select * from usr where id = %s", usrId)
+    result = ResultToDict(usr)
     return ToJson(result)
 
 @app.route('/task/<taskId>')
@@ -72,14 +105,37 @@ def GetTask(taskId):
     return result
 
 @app.route('/task/user/<userId>')
-def GetTasksByUserRoute(userId):
-    return InvokeService(lambda: GetTasksByUser(userId))
+def GetTasksByUserRoute(usrId):
+    return InvokeService(lambda: GetTasksByUser(usrId))
 
-def GetTasksByUser(userId):
-    results = Query("select * from v_tsk_usr where usr_id = %s", userId)
+def GetTasksByUser(usrId):
+    results = Query("select * from v_tsk_usr where usr_id = %s", usrId)
     return ResultsToDicts(results)
 
+def Elt(array, index):
+    try:
+        return array[index]
+    except IndexError:
+        return None
+
 if __name__ == "__main__":
-    host = '127.0.0.1' if TEST_LOCALHOST_ONLY else '0.0.0.0'
-    app.run(host=host, port=TEST_SERVER_PORT)
+    allPorts = False
+    if '--all' in sys.argv:
+        allPorts = True
+        sys.argv.remove('--all')
+        print(sys.argv)
+    if Elt(sys.argv, 1) == 'set':
+        what = sys.argv[2]
+        if what == 'pwd':
+            usrId = sys.argv[3]
+            password = sys.argv[4]
+            StorePassword(usrId, password)
+        else:
+            print("Don't know how to set '%s'." % what, file=sys.stderr)
+    else:
+        if allPorts or not TEST_LOCALHOST_ONLY:
+            host = '0.0.0.0'
+        else:
+            host = '127.0.0.1'
+        app.run(host=host, port=TEST_SERVER_PORT)
 

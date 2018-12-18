@@ -9,6 +9,15 @@ create table usr (
   primary key (id)
 );
 
+create table pwd (
+  usr_id int references usr(id),
+  method varchar(20) not null,
+  salt bytea not null,
+  hash bytea not null,
+  create_inst timestamp not null default current_timestamp,
+  primary key (usr_id)
+);
+
 create table doc_type (
   id int,
   deleted boolean not null default false,
@@ -91,6 +100,8 @@ begin
   insert into usr (username, fullname)
     values ('njc', 'Nate C');
   usr_id := currval(pg_get_serial_sequence('usr', 'id'));
+  --insert into pwd (usr_id, method, salt, hash)
+  --  values (usr_id, 'sha256:200', 
   insert into doc (doc_type_id, body)
     values (1, 'My task.');
   doc_id := currval(pg_get_serial_sequence('doc', 'id'));
