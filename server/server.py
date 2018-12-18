@@ -58,19 +58,7 @@ def VerifyPassword(method, salt, storedHash, suppliedPassword):
     encodedPwd = suppliedPassword.encode(PASSWORD_ENCODING)
     its = int(iterations) * 1000
     attempt = hashlib.pbkdf2_hmac(hashName, encodedPwd, salt, its)
-    sh = bytes(storedHash)
-    print("USER PWD: ", suppliedPassword)
-    print("USER HASH:", BinToHex(attempt), type(attempt))
-    print("DB HASH:  ", BinToHex(sh), type(sh))
-    return attempt == sh
-
-def BinToHex(binary):
-    hex = binascii.b2a_hex(binary)
-    return hex.decode('ascii')
-
-def HexToBin(hex):
-    binary = binascii.a2b_hex(hex)
-    return binary
+    return attempt == bytes(storedHash)
 
 def StorePassword(usrId, password):
     hashName = PASSWORD_HASH

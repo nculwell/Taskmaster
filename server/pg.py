@@ -92,6 +92,14 @@ def ToJson(x):
     j = json.dumps(x, cls=_JSONEncoder)
     return j
 
+def BinToHex(binary):
+    hex = binascii.b2a_hex(binary)
+    return hex.decode('ascii')
+
+def HexToBin(hex):
+    binary = binascii.a2b_hex(hex)
+    return binary
+
 if __name__ == "__main__":
     DEBUG_PRINT=True
     r = Query("select * from usr")
