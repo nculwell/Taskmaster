@@ -102,7 +102,7 @@ class MainFrame(base.Frame):
         dlg.Destroy()
 
     def OnLogin(self, e):
-        print("Handling login event:", e.usr)
+        #print("Handling login event:", e.usr)
         self.loginUsr = e.usr
         id, username, fullname = e.usr['id'], e.usr['username'], e.usr['fullname']
         self.usernameText.SetLabelText('%s [%d]' % (fullname, id))

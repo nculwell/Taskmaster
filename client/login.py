@@ -73,14 +73,8 @@ class LoginActivity(base.Activity):
         except Exception as e:
             self.LoginFailure(str(e))
             return
-        print("LOGIN: %s, %s. RESPONSE: %s" % (username, password, loginUsr), file=sys.stderr)
-        #self.LoginSuccess(loginUsr)
+        #print("LOGIN: %s, %s. RESPONSE: %s" % (username, password, loginUsr), file=sys.stderr)
         wx.PostEvent(self, LoginEvent(usr=loginUsr))
-
-    #def LoginSuccess(self, loginUsr):
-    #    print("Raising login event.")
-    #    wx.PostEvent(self, LoginEvent(usr=loginUsr))
-    #    print("Raised login event.")
 
     def LoginFailure(self, message=''):
         self.errMsg.SetLabelText("LOGIN FAILED" if message=='' else message)

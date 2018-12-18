@@ -48,11 +48,11 @@ class Frame(wx.Frame):
     def Bind(self, event, handler, source=None, id=wx.ID_ANY, id2=wx.ID_ANY, logEvents=False):
         wx.Frame.Bind(self, event, EventHandlerWrapper(handler, logEvents), source, id, id2)
 
-class Activity(wx.Control):
+class Activity(wx.Panel):
 
     def __init__(self, parent, id=wx.ID_ANY):
         style = wx.BORDER_SIMPLE
-        wx.Control.__init__(self, parent, id, style=style)
+        wx.Panel.__init__(self, parent, id, style=style)
         try:
             self.Construct()
         except Exception as e:
@@ -62,10 +62,10 @@ class Activity(wx.Control):
     def Bind(self, event, handler, source=None, id=wx.ID_ANY, id2=wx.ID_ANY, logEvents=False):
         wx.Frame.Bind(self, event, EventHandlerWrapper(handler, logEvents), source, id, id2)
 
-class Form(wx.Control):
+class Form(wx.Panel):
 
     def __init__(self, parent, id=wx.ID_ANY, fields=()):
-        wx.Control.__init__(self, parent, id=id, style=wx.BORDER_NONE)
+        wx.Panel.__init__(self, parent, id=id, style=wx.BORDER_NONE)
         try:
             self.Construct(fields)
         except Exception as e:
