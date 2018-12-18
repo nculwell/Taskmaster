@@ -68,9 +68,12 @@ class LoginActivity(base.Activity):
     def OnLogin(self, event):
         username = self.form.fields['username'].GetText()
         password = self.form.fields['password'].GetText()
+        if username == '':
+            return
         try:
             loginUsr = net.Login(username, password)
         except Exception as e:
+            traceback.print_exc()
             self.LoginFailure(str(e))
             return
         #print("LOGIN: %s, %s. RESPONSE: %s" % (username, password, loginUsr), file=sys.stderr)

@@ -3,7 +3,7 @@
 
 #import http.client
 import http.cookiejar, urllib.request
-import json
+import json, hashlib, binascii
 
 HTTPS=False
 
@@ -45,8 +45,20 @@ def CallService(path):
 
 def Login(username, password):
     session['username'] = username
-    session['password'] = password
+    session['password'] = HashPassword(password)
     return _Login()
+
+def HashPassword(password):
+    pwdEncoded = password.encode('utf8')
+    h = hashlib.sha256(pwdEncoded)
+    h.update(pwdEncoded)
+    pwdSha256 = h.digest()
+    return BinToHex(pwdSha256)
+
+def BinToHex(binary):
+    by = bytes(binary)
+    hex = binascii.b2a_hex(by)
+    return hex.decode('ascii')
 
 def _Login():
     usr = session['username']

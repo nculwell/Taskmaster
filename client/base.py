@@ -84,6 +84,7 @@ class Form(wx.Panel):
             labelValue = field['label']
             entryValue = field.get('value', '')
             validator = field.get('validator')
+            maxLength = field.get('maxlength', 1000)
             label = wx.StaticText(self, -1, labelValue + ':')
             teStyle = 0
             if field.get('password', False):
@@ -92,6 +93,7 @@ class Form(wx.Panel):
                 entry = wx.TextCtrl(self, value=entryValue, style=teStyle)
             else:
                 entry = wx.TextCtrl(self, value=entryValue, style=teStyle, validator=validator)
+            entry.SetMaxLength(maxLength)
             errMsg = wx.StaticText(self, -1, '')
             errMsg.SetForegroundColour(color.ERRMSG)
             addFlag = wx.ALL|wx.ALIGN_CENTER_VERTICAL
