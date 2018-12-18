@@ -63,33 +63,71 @@ class Activity(wx.Control):
 
 class Form(wx.Control):
 
-    def __init__(self, parent, fields):
-        wx.Control.__init__(self, parent, id, style=wx.BORDER_NONE)
+    def __init__(self, parent, id=wx.ID_ANY, fields=()):
+        wx.Control.__init__(self, parent, id=id, style=wx.BORDER_NONE)
         try:
             self.Construct(fields)
         except Exception as e:
             traceback.print_exc()
 
     def Construct(self, fields):
-        gs = wx.GridSizer(rows=len(fields), cols=3, hgap=5, vgap=5)
-        self.SetSizer(gs)
-        labelFont = wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD)
+        fgs = wx.FlexGridSizer(cols=3, hgap=5, vgap=5)
+        fgs.AddGrowableCol(idx=1, proportion=6)
+        fgs.AddGrowableCol(idx=2, proportion=1)
         errMsgFont = wx.Font(10, wx.SWISS, wx.NORMAL, wx.BOLD)
+        i=0
+        self.fields = {}
         for field in fields:
-            label = wx.StaticText(self, -1, field['label'])
-            #label.SetFont(labelFont)
-            textCtrl = wx.TextCtrl(self,
-                    value=field.get('value', ''),
-                    validator=field.get('validator'))
+            i = i + 1
+            fieldName = field['name']
+            labelValue = field['label']
+            entryValue = field.get('value', '')
+            validator = field.get('validator')
+            label = wx.StaticText(self, -1, labelValue + ':')
+            teStyle = 0
+            if field.get('password', False):
+                teStyle = wx.TE_PASSWORD
+            if validator == None:
+                entry = wx.TextCtrl(self, value=entryValue, style=teStyle)
+            else:
+                entry = wx.TextCtrl(self, value=entryValue, style=teStyle, validator=validator)
             errMsg = wx.StaticText(self, -1, '')
-            #errMsg.SetFont(errMsgFont)
-            gs.Add(label, 0, wx.ALL|wx.EXPAND, 0)
-            gs.Add(textCtrl, 4, wx.ALL|wx.EXPAND, 0)
-            gs.Add(errMsg, 1, wx.ALL|wx.EXPAND, 0)
+            errMsg.SetForegroundColour(wx.Colour(0xFF, 0, 0))
+            addFlag = wx.ALL|wx.ALIGN_CENTER_VERTICAL
+            fgs.Add(label, flag=addFlag)
+            fgs.Add(entry, flag=addFlag|wx.EXPAND)
+            fgs.Add(errMsg, flag=addFlag)
+            self.fields[fieldName] = FormField(fieldName, entry, errMsg)
+        self.SetSizer(fgs)
 
     # Wrap event handlers so we can control exception logging.
     def Bind(self, event, handler, source=None, id=wx.ID_ANY, id2=wx.ID_ANY, logEvents=False):
         wx.Frame.Bind(self, event, EventHandlerWrapper(handler, logEvents), source, id, id2)
+
+class FormField:
+
+    def __init__(self, name, textCtrl, errMsgText):
+        assert isinstance(name, str)
+        assert isinstance(textCtrl, wx.TextCtrl)
+        assert isinstance(errMsgText, wx.StaticText)
+        self.name = name
+        self.textCtrl = textCtrl
+        self.errMsgText = errMsgText
+
+    def GetText(self):
+        return '\n'.join(self.GetTextLines())
+
+    def GetTextLines(self):
+        tc = self.textCtrl
+        lines = [ tc.GetLineText(ln) for ln in range(tc.GetNumberOfLines()) ]
+        return lines
+
+    def ClearErrorMessage(self):
+        self.errMsgText.SetLabelText('')
+
+    def SetErrorMessage(self, message):
+        assert isinstance(message, str)
+        self.errMsgText.SetLabelText(message)
 
 class EventHandlerWrapper:
 

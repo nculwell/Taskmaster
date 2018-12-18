@@ -3,7 +3,7 @@
 
 import wx
 import base
-import re
+import sys, re
 
 LABEL_WIDTH = 200
 
@@ -14,37 +14,28 @@ class LoginActivity(base.Activity):
 
     def Construct(self):
         box = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(box)
         box.Add(0, 0, 1) # stretchable empty space
 
         headingText = wx.StaticText(self, -1, "TIME TO LOG IN",
                 style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
         headingText.SetFont(wx.Font(18, wx.SWISS, wx.NORMAL, wx.BOLD))
-        #headingText.SetSize(headingText.GetBestSize())
-        box.Add(headingText, 0, wx.ALL|wx.EXPAND, 0)
+        box.Add(headingText, 0, wx.ALL|wx.EXPAND)
 
-        horz = wx.BoxSizer(wx.HORIZONTAL)
-        lblUsername = wx.StaticText(self, -1, "Username:", style=wx.ST_NO_AUTORESIZE)
-        lblUsername.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD))
-        #lblUsername.SetSize(lblUsername.GetBestSize())
-        #lblUsername.SetSize(LABEL_WIDTH, lblUsername.GetSize().height)
-        horz.Add(lblUsername, 0, wx.ALL, 0)
-        txtUsername = wx.TextCtrl(self, validator=UsernameValidator())
-        horz.Add(txtUsername, 1, wx.ALL, 0)
-        box.Add(horz, 0, wx.ALL|wx.EXPAND, 0)
+        formFields = (
+            { 'name': 'username', 'label': 'Username' },
+            { 'name': 'password', 'label': 'Password', 'password': True },
+        )
+        self.form = base.Form(self, fields=formFields)
+        box.Add(self.form, 0, wx.ALL|wx.EXPAND, 10)
 
-        horz = wx.BoxSizer(wx.HORIZONTAL)
-        lblPassword = wx.StaticText(self, -1, "Password:", style=wx.ST_NO_AUTORESIZE|wx.TE_PASSWORD)
-        lblPassword.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD))
-        #lblPassword.SetSize(lblPassword.GetBestSize())
-        #lblPassword.SetSize(LABEL_WIDTH, lblPassword.GetSize().height)
-        horz.Add(lblPassword, 0, wx.ALL, 0)
-        txtPassword = wx.TextCtrl(self, validator=PasswordValidator())
-        horz.Add(txtPassword, 1, wx.ALL, 0)
-        box.Add(horz, 0, wx.ALL|wx.EXPAND, 0)
+        submitButton = wx.Button(self, wx.ID_ANY, "Log in")
+        submitButton.Bind(wx.EVT_BUTTON, self.OnLogin)
+        submitButton.SetDefault()
+        box.Add(submitButton, 0, wx.ALL|wx.CENTER, 10)
 
         box.Add(0, 0, 1) # stretchable empty space
-        self.SetSizer(box)
-    
+
     def UpdateRow(self, index, task):
         self.SetCellValue(index, 0, task.id)
         self.SetCellValue(index, 1, task.type)
@@ -63,6 +54,12 @@ class LoginActivity(base.Activity):
             self.MoveRow(newRowIndex, index)
 
     def MoveRow(self, fromIndex, toIndex):
+        pass # TODO
+
+    def OnLogin(self, event):
+        username = self.form.fields['username'].GetText()
+        password = self.form.fields['password'].GetText()
+        print("LOGGED IN: %s, %s" % (username, password), file=sys.stderr)
         pass # TODO
 
 class UsernameValidator(wx.Validator):
