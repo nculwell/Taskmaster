@@ -5,7 +5,7 @@ create table usr (
   deleted boolean not null default false,
   username varchar(32) not null,
   fullname varchar(128) not null,
-  create_inst timestamp not null default current_timestamp,
+  create_ts timestamp not null default current_timestamp,
   primary key (id)
 );
 
@@ -14,8 +14,8 @@ create table pwd (
   method varchar(20) not null,
   salt bytea not null,
   hash bytea not null,
-  create_inst timestamp not null default current_timestamp,
-  primary key (usr_id)
+  create_ts timestamp not null default current_timestamp,
+  primary key (usr_id, create_ts)
 );
 
 create table doc_type (
@@ -29,7 +29,7 @@ create table doc (
   id serial,
   doc_type_id int not null references doc_type(id),
   body text not null,
-  create_inst timestamp not null default current_timestamp,
+  create_ts timestamp not null default current_timestamp,
   primary key (id)
 );
 
@@ -46,7 +46,7 @@ create table tsk (
   tsk_type_id int not null references task_type(id),
   title varchar(128) not null,
   desc_doc_id int not null references doc(id),
-  create_inst timestamp not null default current_timestamp,
+  create_ts timestamp not null default current_timestamp,
   primary key (id)
 );
 
@@ -96,14 +96,15 @@ declare
   usr_id int;
   doc_id int;
   tsk_id int;
+  pass_salt bytea := '\x3964d9aa1eabf7685aecdb9cb368b22c';
+  pass_hash bytea := -- password is 'xxx'
+    '\xc86b27f5a1e71cb82851661ba9e076ec6e310d419080183bef1b7d2173efa96d';
 begin
   insert into usr (username, fullname)
     values ('njc', 'Nate C');
   usr_id := currval(pg_get_serial_sequence('usr', 'id'));
-  insert into pwd (usr_id, method, salt, hash) -- password is 'xxx'
-    values (usr_id, 'sha256:200',
-      '\x67e07c8a5edd8671fe59a268037171f6',
-      '\x01d8866d61ca76efbf6cbace6d6216f4bd5e41e36aa095230572d30f3f94e9fd');
+  insert into pwd (usr_id, method, salt, hash)
+    values (usr_id, 'sha256:200', pass_salt, pass_hash);
   insert into doc (doc_type_id, body)
     values (1, 'My task.');
   doc_id := currval(pg_get_serial_sequence('doc', 'id'));

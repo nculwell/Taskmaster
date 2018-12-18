@@ -2,7 +2,7 @@
 # vim: ts=4 sts=4 sw=4 et smartindent
 
 import psycopg2, psycopg2.extras
-import json, datetime
+import json, datetime, binascii
 
 PGPORT=5433
 DEBUG_PRINT=False

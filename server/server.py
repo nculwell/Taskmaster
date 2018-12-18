@@ -9,6 +9,8 @@ from pg import *
 TEST_SERVER_PORT=8257
 TEST_LOCALHOST_ONLY=True
 
+MIN_REQUIRED_VERSION = 0
+
 PASSWORD_HASH = 'sha256'
 PASSWORD_SALT_BYTES = 16
 PASSWORD_ITERATIONS_THOUSANDS = 200
@@ -26,19 +28,24 @@ def Home():
 @app.route('/login', methods=['POST'])
 def Login():
     username = flask.request.form.get('usr', '')
-    password = flask.request.form.get('pwd', '')
+    pwdSha256Hex = flask.request.form.get('pwd', '')
+    version = flask.request.form.get('v', 0)
+    if version < MIN_REQUIRED_VERSION:
+        flask.abort(500,
+                "Requires at least version %d." % MIN_REQUIRED_VERSION)
     if username == '':
         raise Exception("Username not found.")
-    if password == '':
+    if pwdSha256Hex == '':
         raise Exception("Password not found.")
-    loginUsr = DoLogin(username, password)
+    pwdSha256 = HexToBin(pwdSha256Hex)
+    loginUsr = DoLogin(username, pwdSha256)
     if loginUsr is None:
         flask.abort(401)
     else:
         flask.session['usr'] = username
         return ToJson(ResultToDict(loginUsr))
 
-def DoLogin(username, password):
+def DoLogin(username, pwdSha256):
     try:
         usr = Query1("select * from usr where username = %s", username)
     except EntityNotFoundException:
@@ -46,31 +53,33 @@ def DoLogin(username, password):
         return None
     p = Query1("""
         select p.* from pwd p where p.usr_id = %s
-        order by p.create_inst desc limit 1
+        order by p.create_ts desc limit 1
     """, usr['id'])
-    if not VerifyPassword(p['method'], p['salt'], p['hash'], password):
+    if not VerifyPassword(p['method'], p['salt'], p['hash'], pwdSha256):
         print("Password not matched for user: %s" % username, file=sys.stderr)
         return None
     return usr
 
-def VerifyPassword(method, salt, storedHash, suppliedPassword):
+def VerifyPassword(method, salt, storedPwdHash, pwdSha256):
     hashName, iterations = method.split(':')
-    encodedPwd = suppliedPassword.encode(PASSWORD_ENCODING)
     its = int(iterations) * 1000
-    attempt = hashlib.pbkdf2_hmac(hashName, encodedPwd, salt, its)
-    return attempt == bytes(storedHash)
+    pwdHash = hashlib.pbkdf2_hmac(hashName, pwdSha256, salt, its)
+    return pwdHash == bytes(storedPwdHash)
 
 def StorePassword(usrId, password):
     hashName = PASSWORD_HASH
-    binaryPassword = password.encode(PASSWORD_ENCODING)
+    pwdEncoded = password.encode(PASSWORD_ENCODING)
+    h = hashlib.sha256()
+    h.update(pwdEncoded)
+    pwdSha256 = h.digest()
     salt = os.urandom(PASSWORD_SALT_BYTES)
     iterations = PASSWORD_ITERATIONS_THOUSANDS * 1000
-    hash = hashlib.pbkdf2_hmac(hashName, binaryPassword, salt, iterations)
+    newPwdHash = hashlib.pbkdf2_hmac(hashName, pwdSha256, salt, iterations)
     Insert('pwd', (
             ('usr_id', usrId),
             ('method', hashName + ':' + str(PASSWORD_ITERATIONS_THOUSANDS)),
             ('salt', salt),
-            ('hash', hash),
+            ('hash', newPwdHash),
         ))
 
 def CheckLogin():
