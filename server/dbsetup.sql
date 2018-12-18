@@ -100,8 +100,10 @@ begin
   insert into usr (username, fullname)
     values ('njc', 'Nate C');
   usr_id := currval(pg_get_serial_sequence('usr', 'id'));
-  --insert into pwd (usr_id, method, salt, hash)
-  --  values (usr_id, 'sha256:200', 
+  insert into pwd (usr_id, method, salt, hash) -- password is 'xxx'
+    values (usr_id, 'sha256:200',
+      '\x67e07c8a5edd8671fe59a268037171f6',
+      '\x01d8866d61ca76efbf6cbace6d6216f4bd5e41e36aa095230572d30f3f94e9fd');
   insert into doc (doc_type_id, body)
     values (1, 'My task.');
   doc_id := currval(pg_get_serial_sequence('doc', 'id'));
