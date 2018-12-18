@@ -3,7 +3,7 @@
 
 import flask
 import psycopg2, psycopg2.extras
-import sys, os, traceback, hashlib
+import sys, os, traceback, hashlib, binascii
 from pg import *
 
 TEST_SERVER_PORT=8257
@@ -12,6 +12,7 @@ TEST_LOCALHOST_ONLY=True
 PASSWORD_HASH = 'sha256'
 PASSWORD_SALT_BYTES = 16
 PASSWORD_ITERATIONS_THOUSANDS = 200
+PASSWORD_ENCODING = 'utf8'
 
 app = flask.Flask(__name__)
 
@@ -35,30 +36,45 @@ def Login():
         flask.abort(401)
     else:
         flask.session['usr'] = username
-        return loginUsr
+        return ToJson(ResultToDict(loginUsr))
 
 def DoLogin(username, password):
     try:
         usr = Query1("select * from usr where username = %s", username)
     except EntityNotFoundException:
+        print("User not found: %s" % username, file=sys.stderr)
         return None
     p = Query1("""
         select p.* from pwd p where p.usr_id = %s
         order by p.create_inst desc limit 1
-    """, usr.id)
+    """, usr['id'])
     if not VerifyPassword(p['method'], p['salt'], p['hash'], password):
+        print("Password not matched for user: %s" % username, file=sys.stderr)
         return None
     return usr
 
 def VerifyPassword(method, salt, storedHash, suppliedPassword):
     hashName, iterations = method.split(':')
+    encodedPwd = suppliedPassword.encode(PASSWORD_ENCODING)
     its = int(iterations) * 1000
-    attempt = hashlib.pbkdf2_hmac(hashName, suppliedPassword, salt, its)
-    return attempt == storedHash
+    attempt = hashlib.pbkdf2_hmac(hashName, encodedPwd, salt, its)
+    sh = bytes(storedHash)
+    print("USER PWD: ", suppliedPassword)
+    print("USER HASH:", BinToHex(attempt), type(attempt))
+    print("DB HASH:  ", BinToHex(sh), type(sh))
+    return attempt == sh
+
+def BinToHex(binary):
+    hex = binascii.b2a_hex(binary)
+    return hex.decode('ascii')
+
+def HexToBin(hex):
+    binary = binascii.a2b_hex(hex)
+    return binary
 
 def StorePassword(usrId, password):
     hashName = PASSWORD_HASH
-    binaryPassword = password.encode('utf-8')
+    binaryPassword = password.encode(PASSWORD_ENCODING)
     salt = os.urandom(PASSWORD_SALT_BYTES)
     iterations = PASSWORD_ITERATIONS_THOUSANDS * 1000
     hash = hashlib.pbkdf2_hmac(hashName, binaryPassword, salt, iterations)
