@@ -3,7 +3,7 @@
 
 import psycopg2, psycopg2.extras
 import json, datetime, binascii
-from ..common.data import *
+from common.data import *
 
 PGPORT=5433
 DEBUG_PRINT=False
