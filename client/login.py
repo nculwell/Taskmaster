@@ -3,7 +3,7 @@
 
 import wx, wx.lib.newevent
 import sys, re, traceback, urllib, urllib.error
-import base, net, color
+from . import base, net, color
 
 LABEL_WIDTH = 200
 

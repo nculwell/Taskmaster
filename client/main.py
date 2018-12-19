@@ -5,8 +5,7 @@
 import wx
 import sys
 
-from task import *
-import mainframe
+from . import task, mainframe
 
 applicationName = "TaskMaster"
 
@@ -15,10 +14,14 @@ initialData = [
     { "id": "2", "type": "B", "title": "Second" },
 ]
 
-initialTasks = [ Task(t) for t in initialData ]
+initialTasks = [ task.Task(t) for t in initialData ]
 
-app = wx.App(redirect=True)   # Error messages go to popup window
-top = mainframe.MainFrame(initialTasks)
-top.Show()
-app.MainLoop()
+def Start():
+    app = wx.App(redirect=True) # redirect: error messages go to popup window
+    top = mainframe.MainFrame(initialTasks)
+    top.Show()
+    app.MainLoop()
+
+if __name__ == '__main__':
+    Start()
 

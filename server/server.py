@@ -7,7 +7,7 @@ import sys, os, traceback, hashlib, binascii
 from pg import *
 
 TEST_SERVER_PORT=8257
-TEST_LOCALHOST_ONLY=True
+TEST_LOCALHOST_ONLY=False
 
 MIN_REQUIRED_VERSION = 0
 
@@ -134,30 +134,7 @@ def GetTasksByUser(usrId):
     results = Query("select * from v_tsk_usr where usr_id = %s", usrId)
     return ResultsToDicts(results)
 
-def Elt(array, index):
-    try:
-        return array[index]
-    except IndexError:
-        return None
-
-if __name__ == "__main__":
-    allPorts = False
-    if '--all' in sys.argv:
-        allPorts = True
-        sys.argv.remove('--all')
-        print(sys.argv)
-    if Elt(sys.argv, 1) == 'set':
-        what = sys.argv[2]
-        if what == 'pwd':
-            usrId = sys.argv[3]
-            password = sys.argv[4]
-            StorePassword(usrId, password)
-        else:
-            print("Don't know how to set '%s'." % what, file=sys.stderr)
-    else:
-        if allPorts or not TEST_LOCALHOST_ONLY:
-            host = '0.0.0.0'
-        else:
-            host = '127.0.0.1'
-        app.run(host=host, port=TEST_SERVER_PORT)
+def Serve():
+    host = '127.0.0.1' if TEST_LOCALHOST_ONLY else '0.0.0.0'
+    app.run(host=host, port=TEST_SERVER_PORT)
 

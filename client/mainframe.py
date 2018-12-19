@@ -3,9 +3,8 @@
 
 import wx, wx.html, wx.grid
 import sys, datetime
-from taskgrid import TaskGrid
-from login import LoginActivity
-import defs, base
+
+from . import defs, base, login, taskgrid
 
 aboutText = """
 <div>
@@ -46,8 +45,8 @@ class MainFrame(base.Frame):
         box.Add(self.activitySizer, 1, wx.ALL|wx.EXPAND, 10)
 
         self.panel.SetSizer(box)
-        self.LoadActivity(LoginActivity(self.panel, onLogin=self.OnLogin))
-        #self.LoadActivity(TaskGrid(self.panel, tasks=self.initialTasks))
+        self.LoadActivity(login.LoginActivity(self.panel, onLogin=self.OnLogin))
+        #self.LoadActivity(taskgrid.TaskGrid(self.panel, tasks=self.initialTasks))
         #del self.initialTasks
 
     def LoadActivity(self, activity):
@@ -106,7 +105,7 @@ class MainFrame(base.Frame):
         self.loginUsr = e.usr
         id, username, fullname = e.usr['id'], e.usr['username'], e.usr['fullname']
         self.usernameText.SetLabelText('%s [%d]' % (fullname, id))
-        self.LoadActivity(TaskGrid(self.panel, tasks=self.initialTasks))
+        self.LoadActivity(taskgrid.TaskGrid(self.panel, tasks=self.initialTasks))
 
 class HtmlWindow(wx.html.HtmlWindow):
     import urllib, urllib.parse

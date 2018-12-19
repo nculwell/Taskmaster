@@ -3,7 +3,7 @@
 
 import wx, wx.html, wx.grid
 import sys, os, traceback
-import color
+from . import color
 
 class Dialog(wx.Dialog):
 
