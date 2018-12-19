@@ -5,6 +5,7 @@ import flask
 import psycopg2, psycopg2.extras
 import sys, os, traceback, hashlib, binascii
 from .pg import *
+from ..common.data import *
 
 TEST_SERVER_PORT=8257
 TEST_LOCALHOST_ONLY=False
@@ -87,13 +88,6 @@ def StorePassword(usrId, password):
             ('salt', salt),
             ('hash', newPwdHash),
         ))
-
-def HashPassword(password):
-    pwdEncoded = password.encode(PASSWORD_ENCODING)
-    h = hashlib.sha256(pwdEncoded)
-    h.update(pwdEncoded)
-    pwdSha256 = h.digest()
-    return pwdSha256
 
 def CheckLogin():
     if not 'usr' in flask.session:

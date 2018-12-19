@@ -3,6 +3,7 @@
 
 import psycopg2, psycopg2.extras
 import json, datetime, binascii
+from ..common.data import *
 
 PGPORT=5433
 DEBUG_PRINT=False
@@ -91,14 +92,6 @@ class _JSONEncoder(json.JSONEncoder):
 def ToJson(x):
     j = json.dumps(x, cls=_JSONEncoder)
     return j
-
-def BinToHex(binary):
-    hex = binascii.b2a_hex(binary)
-    return hex.decode('ascii')
-
-def HexToBin(hex):
-    binary = binascii.a2b_hex(hex)
-    return binary
 
 if __name__ == "__main__":
     DEBUG_PRINT=True
