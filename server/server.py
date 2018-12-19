@@ -37,6 +37,7 @@ def Login():
         raise Exception("Username not found.")
     if pwdSha256Hex == '':
         raise Exception("Password not found.")
+    print('PASSWORD', pwdSha256Hex)
     pwdSha256 = HexToBin(pwdSha256Hex)
     loginUsr = DoLogin(username, pwdSha256)
     if loginUsr is None:
@@ -68,19 +69,27 @@ def VerifyPassword(method, salt, storedPwdHash, pwdSha256):
 
 def StorePassword(usrId, password):
     hashName = PASSWORD_HASH
-    pwdEncoded = password.encode(PASSWORD_ENCODING)
-    h = hashlib.sha256()
-    h.update(pwdEncoded)
-    pwdSha256 = h.digest()
-    salt = os.urandom(PASSWORD_SALT_BYTES)
     iterations = PASSWORD_ITERATIONS_THOUSANDS * 1000
+    method = '%s:%d' % (hashName, PASSWORD_ITERATIONS_THOUSANDS)
+    pwdSha256 = HashPassword(password)
+    print(BinToHex(pwdSha256))
+    salt = os.urandom(PASSWORD_SALT_BYTES)
     newPwdHash = hashlib.pbkdf2_hmac(hashName, pwdSha256, salt, iterations)
+    print("SALT: " + BinToHex(salt))
+    print("HASH: " + BinToHex(newPwdHash))
     Insert('pwd', (
             ('usr_id', usrId),
-            ('method', hashName + ':' + str(PASSWORD_ITERATIONS_THOUSANDS)),
+            ('method', method),
             ('salt', salt),
             ('hash', newPwdHash),
         ))
+
+def HashPassword(password):
+    pwdEncoded = password.encode(PASSWORD_ENCODING)
+    h = hashlib.sha256(pwdEncoded)
+    h.update(pwdEncoded)
+    pwdSha256 = h.digest()
+    return pwdSha256
 
 def CheckLogin():
     if not 'usr' in flask.session:

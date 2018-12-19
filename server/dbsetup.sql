@@ -96,9 +96,12 @@ declare
   usr_id int;
   doc_id int;
   tsk_id int;
-  pass_salt bytea := '\x3964d9aa1eabf7685aecdb9cb368b22c';
+  pass_salt bytea := '\x0b5b485525f037c9eb11bef01f423ffc';
   pass_hash bytea := -- password is 'xxx'
-    '\xc86b27f5a1e71cb82851661ba9e076ec6e310d419080183bef1b7d2173efa96d';
+    '\x1f26ad562f94c2929de0c42952a10d23a23b0132a2b0be2a46cd56faccf588aa';
+  --pass_salt bytea := '\x3964d9aa1eabf7685aecdb9cb368b22c';
+  --pass_hash bytea := -- password is 'xxx'
+  --  '\xc86b27f5a1e71cb82851661ba9e076ec6e310d419080183bef1b7d2173efa96d';
 begin
   insert into usr (username, fullname)
     values ('njc', 'Nate C');
