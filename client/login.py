@@ -2,7 +2,7 @@
 # vim: et ts=8 sts=4 sw=4
 
 import wx, wx.lib.newevent
-import sys, re, traceback
+import sys, re, traceback, urllib, urllib.error
 import base, net, color
 
 LABEL_WIDTH = 200
@@ -22,7 +22,7 @@ class LoginActivity(base.Activity):
         self.SetSizer(box)
         box.Add(0, 0, 1) # stretchable empty space
 
-        headingText = wx.StaticText(self, -1, "TIME TO LOG IN",
+        headingText = wx.StaticText(self, -1, "PLEASE LOG IN",
                 style=wx.ALIGN_CENTRE_HORIZONTAL|wx.ST_NO_AUTORESIZE)
         headingText.SetFont(wx.Font(18, wx.SWISS, wx.NORMAL, wx.BOLD))
         box.Add(headingText, 0, wx.ALL|wx.EXPAND)
@@ -39,7 +39,7 @@ class LoginActivity(base.Activity):
         submitButton.SetDefault()
         box.Add(submitButton, 0, wx.ALL|wx.CENTER, 10)
 
-        self.errMsg = wx.StaticText(self, wx.ID_ANY, "(ERROR)")
+        self.errMsg = wx.StaticText(self, wx.ID_ANY, '')
         self.errMsg.SetForegroundColour(color.ERRMSG)
         box.Add(self.errMsg, 0, wx.ALL|wx.CENTER, 10)
 
@@ -72,12 +72,18 @@ class LoginActivity(base.Activity):
             return
         try:
             loginUsr = net.Login(username, password)
+            #print("LOGIN: %s, %s. RESPONSE: %s" % (username, password, loginUsr), file=sys.stderr)
+            wx.PostEvent(self, LoginEvent(usr=loginUsr))
+        except urllib.error.HTTPError as e:
+            # urllib.error.HTTPError: HTTP Error 401: UNAUTHORIZED
+            if str(e).startswith('HTTP Error 401:'):
+                self.LoginFailure("Bad username/password.")
+            else:
+                traceback.print_exc()
+                self.LoginFailure(str(e))
         except Exception as e:
             traceback.print_exc()
             self.LoginFailure(str(e))
-            return
-        #print("LOGIN: %s, %s. RESPONSE: %s" % (username, password, loginUsr), file=sys.stderr)
-        wx.PostEvent(self, LoginEvent(usr=loginUsr))
 
     def LoginFailure(self, message=''):
         self.errMsg.SetLabelText("LOGIN FAILED" if message=='' else message)
