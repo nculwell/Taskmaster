@@ -4,7 +4,7 @@
 #import http.client
 import http.cookiejar, urllib.request
 import json, hashlib, binascii
-from ..common.data import *
+from common.data import *
 
 HTTPS=False
 
