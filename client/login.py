@@ -28,7 +28,7 @@ class LoginActivity(base.Activity):
         box.Add(headingText, 0, wx.ALL|wx.EXPAND)
 
         formFields = (
-            { 'name': 'username', 'label': 'Username' },
+            { 'name': 'username', 'label': 'Username', 'value': 'njc' },
             { 'name': 'password', 'label': 'Password', 'password': True },
         )
         self.form = base.Form(self, fields=formFields)

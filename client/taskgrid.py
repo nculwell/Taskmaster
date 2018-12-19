@@ -1,53 +1,51 @@
 #!/usr/bin/python3
 
 import wx, wx.grid
+import traceback
 from task import *
 
-class TaskGrid(wx.grid.Grid):
+class TaskGrid(wx.Panel):
+
     def __init__(self, parent, tasks = [], id = wx.ID_ANY):
-        wx.grid.Grid.__init__(self, parent, id=id, size=(400,300))
+        wx.Panel.__init__(self, parent, id=id)
         try:
-            self.CreateGrid(0, 3)
-            self.AutoSizeRows()
-            self.HideRowLabels()
-            self.SetColLabelValue(0, "ID")
-            self.SetColLabelValue(1, "Type")
-            self.SetColLabelValue(2, "Title")
-            self.AutoSizeColumns()
-            self.SetColSize(2, 120)
+            self.columnCount = 3
+            self.fgs = wx.FlexGridSizer(cols=self.columnCount)
+            self.SetSizer(self.fgs)
+            self.fgs.SetFlexibleDirection(wx.HORIZONTAL)
+            self.fgs.AddGrowableCol(2, 1)
 
-            self.DisableCellEditControl()
-            self.DisableDragColMove()
-            self.DisableDragColSize()
-            self.DisableDragGridSize()
-            self.DisableDragRowSize()
+            columnNames = ["ID", "Type", "Title"]
+            addFlags = wx.TOP|wx.BOTTOM|wx.EXPAND
+            for c in columnNames:
+                self.fgs.Add(wx.StaticText(self, label=' '+c),
+                        flag=addFlags, border=5)
 
-            self.DisableRowResize(0)
-            self.DisableColResize(0)
-
+            self.fields = []
             for task in tasks:
                 self.InsertRow(task)
 
-            #self.SetCellValue(3, 3, "green on gray")
-            #self.SetCellTextColour(3, 3, wx.GREEN)
-            #self.SetCellBackgroundColour(3, 3, wx.LIGHT_GREY)
-
         except Exception as e:
-            print(e)
+            traceback.print_exc()
 
     def UpdateRow(self, index, task):
-        self.SetCellValue(index, 0, task.id)
-        self.SetCellValue(index, 1, task.type)
-        self.SetCellValue(index, 2, task.title)
+        row = self.fields[index]
+        row[0].SetValue(task.id)
+        row[1].SetValue(task.type)
+        row[2].SetValue(task.title)
 
-    def InsertRow(self, task, index = -1):
-        locker = wx.grid.GridUpdateLocker(self)
-        newRowIndex = self.GetNumberRows()
+    def InsertRow(self, task, index=-1):
+        newRowIndex = len(self.fields)
         if index > newRowIndex:
             raise Exception("Inserted row index is greater than row count.")
-        self.AppendRows(1)
-        for c in range(self.GetNumberCols()):
-            self.SetReadOnly(newRowIndex, c)
+        def NewField():
+            f = wx.TextCtrl(self, style=wx.TE_READONLY)
+            #f = wx.StaticText(self, style=wx.BORDER_SIMPLE)
+            return f
+        row = [ NewField() for i in range(self.columnCount) ]
+        self.fields.append(row)
+        for field in row:
+            self.fgs.Add(field)
         self.UpdateRow(newRowIndex, task)
         if index >= 0 and index < newRowIndex:
             self.MoveRow(newRowIndex, index)
