@@ -21,6 +21,10 @@ app = flask.Flask(__name__)
 # FIXME! CHOOSE A REAL SECRET KEY AND STORE IT PROPERLY
 app.secret_key = os.urandom(16)
 
+def Serve():
+    host = '127.0.0.1' if TEST_LOCALHOST_ONLY else '0.0.0.0'
+    app.run(host=host, port=TEST_SERVER_PORT)
+
 @app.route("/")
 def Home():
     return "To download the client, visit: https://github.com/nculwell/Taskmaster"
@@ -133,8 +137,4 @@ def GetTasksByUserRoute(usrId):
 def GetTasksByUser(usrId):
     results = Query("select * from v_tsk_usr where usr_id = %s", usrId)
     return ResultsToDicts(results)
-
-def Serve():
-    host = '127.0.0.1' if TEST_LOCALHOST_ONLY else '0.0.0.0'
-    app.run(host=host, port=TEST_SERVER_PORT)
 
