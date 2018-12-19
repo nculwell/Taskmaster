@@ -4,7 +4,7 @@
 import flask
 import psycopg2, psycopg2.extras
 import sys, os, traceback, hashlib, binascii
-from pg import *
+from .pg import *
 
 TEST_SERVER_PORT=8257
 TEST_LOCALHOST_ONLY=False
