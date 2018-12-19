@@ -6,6 +6,7 @@ import http.cookiejar, urllib.request
 import json, hashlib, binascii
 
 HTTPS=False
+PASSWORD_ENCODING='utf8'
 
 session = {
     'cj': http.cookiejar.CookieJar(),
@@ -45,15 +46,18 @@ def CallService(path):
 
 def Login(username, password):
     session['username'] = username
-    session['password'] = HashPassword(password)
+    pwdSha256 = HashPassword(password)
+    pwdSha256Hex = BinToHex(pwdSha256)
+    #print(pwdSha256Hex)
+    session['password'] = pwdSha256Hex
     return _Login()
 
 def HashPassword(password):
-    pwdEncoded = password.encode('utf8')
+    pwdEncoded = password.encode(PASSWORD_ENCODING)
     h = hashlib.sha256(pwdEncoded)
     h.update(pwdEncoded)
     pwdSha256 = h.digest()
-    return BinToHex(pwdSha256)
+    return pwdSha256
 
 def BinToHex(binary):
     by = bytes(binary)
