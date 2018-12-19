@@ -4,9 +4,9 @@
 #import http.client
 import http.cookiejar, urllib.request
 import json, hashlib, binascii
+from ..common.data import *
 
 HTTPS=False
-PASSWORD_ENCODING='utf8'
 
 session = {
     'cj': http.cookiejar.CookieJar(),
@@ -51,18 +51,6 @@ def Login(username, password):
     #print(pwdSha256Hex)
     session['password'] = pwdSha256Hex
     return _Login()
-
-def HashPassword(password):
-    pwdEncoded = password.encode(PASSWORD_ENCODING)
-    h = hashlib.sha256(pwdEncoded)
-    h.update(pwdEncoded)
-    pwdSha256 = h.digest()
-    return pwdSha256
-
-def BinToHex(binary):
-    by = bytes(binary)
-    hex = binascii.b2a_hex(by)
-    return hex.decode('ascii')
 
 def _Login():
     usr = session['username']
