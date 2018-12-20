@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # vim: et ts=8 sts=4 sw=4
 
-import server.server
+import server.web
 
-server.server.Serve()
+server.web.Serve()
 
