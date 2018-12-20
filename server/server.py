@@ -53,7 +53,7 @@ def Login():
 
 def DoLogin(username, pwdSha256):
     try:
-        usr = Query1("select * from usr where username = %s", username)
+        usr = Query1("select * from v_usr where username = %s", username)
     except EntityNotFoundException:
         print("User not found: %s" % username, file=sys.stderr)
         return None
@@ -109,7 +109,7 @@ def GetUserRoute(userId):
 
 def GetUser(userId):
     CheckLogin()
-    usr = Query1("select * from usr where id = %s", usrId)
+    usr = Query1("select * from v_usr where id = %s", usrId)
     result = ResultToDict(usr)
     return ToJson(result)
 

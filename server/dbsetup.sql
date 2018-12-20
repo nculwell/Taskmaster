@@ -1,5 +1,7 @@
 -- vim: ts=2 sts=2 sw=2 et autoindent
 
+-- TABLES AND INDEXES
+
 create table usr (
   id serial,
   deleted boolean not null default false,
@@ -8,6 +10,8 @@ create table usr (
   create_ts timestamp not null default current_timestamp,
   primary key (id)
 );
+
+create unique index usr_username_unique on usr (username);
 
 create table pwd (
   usr_id int references usr(id),
@@ -64,6 +68,15 @@ create table tsk_usr (
   primary key (tsk_id, tsk_usr_role_id, usr_id)
 );
 
+create index tsk_usr_usr_id on tsk_usr (usr_id);
+
+-- VIEWS
+
+create view v_usr as
+  select u.id, u.username, u.fullname
+  from usr u
+  where not u.deleted;
+
 create view v_tsk as
   select
     t.id tsk_id, t.tsk_type_id, tt.name tsk_type_name
@@ -84,12 +97,16 @@ create view v_tsk_usr as
   where not u.deleted
 ;
 
+-- STATIC DEFINITIONS
+
 insert into task_type (id, name) values (1, 'dev');
 insert into task_type (id, name) values (2, 'bug');
 insert into doc_type (id, name) values (1, 'task');
 insert into tsk_usr_role (id, name) values (1, 'dev');
 insert into tsk_usr_role (id, name) values (2, 'pqa');
 insert into tsk_usr_role (id, name) values (3, 'qa');
+
+-- TEST DATA
 
 do $$
 declare
@@ -99,9 +116,6 @@ declare
   pass_salt bytea := '\x0b5b485525f037c9eb11bef01f423ffc';
   pass_hash bytea := -- password is 'xxx'
     '\x1f26ad562f94c2929de0c42952a10d23a23b0132a2b0be2a46cd56faccf588aa';
-  --pass_salt bytea := '\x3964d9aa1eabf7685aecdb9cb368b22c';
-  --pass_hash bytea := -- password is 'xxx'
-  --  '\xc86b27f5a1e71cb82851661ba9e076ec6e310d419080183bef1b7d2173efa96d';
 begin
   insert into usr (username, fullname)
     values ('njc', 'Nate C');
