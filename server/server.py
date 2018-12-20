@@ -5,6 +5,7 @@ import flask
 import psycopg2, psycopg2.extras
 import sys, os, traceback, hashlib, binascii
 from .pg import *
+from . import auth
 from common.data import *
 
 TEST_SERVER_PORT=8257
@@ -15,7 +16,6 @@ MIN_REQUIRED_VERSION = 0
 PASSWORD_HASH = 'sha256'
 PASSWORD_SALT_BYTES = 16
 PASSWORD_ITERATIONS_THOUSANDS = 200
-PASSWORD_ENCODING = 'utf8'
 
 app = flask.Flask(__name__)
 
@@ -44,58 +44,22 @@ def Login():
         raise Exception("Password not found.")
     print('PASSWORD', pwdSha256Hex)
     pwdSha256 = HexToBin(pwdSha256Hex)
-    loginUsr = DoLogin(username, pwdSha256)
+    loginUsr = auth.AuthenticateUser(username, pwdSha256)
     if loginUsr is None:
         flask.abort(401)
     else:
         flask.session['usr'] = username
         return ToJson(ResultToDict(loginUsr))
 
-def DoLogin(username, pwdSha256):
+def GetLoggedInUser():
     try:
-        usr = Query1("select * from v_usr where username = %s", username)
-    except EntityNotFoundException:
-        print("User not found: %s" % username, file=sys.stderr)
-        return None
-    p = Query1("""
-        select p.* from pwd p where p.usr_id = %s
-        order by p.create_ts desc limit 1
-    """, usr['id'])
-    if not VerifyPassword(p['method'], p['salt'], p['hash'], pwdSha256):
-        print("Password not matched for user: %s" % username, file=sys.stderr)
-        return None
-    return usr
-
-def VerifyPassword(method, salt, storedPwdHash, pwdSha256):
-    hashName, iterations = method.split(':')
-    its = int(iterations) * 1000
-    pwdHash = hashlib.pbkdf2_hmac(hashName, pwdSha256, salt, its)
-    return pwdHash == bytes(storedPwdHash)
-
-def StorePassword(usrId, password):
-    hashName = PASSWORD_HASH
-    iterations = PASSWORD_ITERATIONS_THOUSANDS * 1000
-    method = '%s:%d' % (hashName, PASSWORD_ITERATIONS_THOUSANDS)
-    pwdSha256 = HashPassword(password)
-    print(BinToHex(pwdSha256))
-    salt = os.urandom(PASSWORD_SALT_BYTES)
-    newPwdHash = hashlib.pbkdf2_hmac(hashName, pwdSha256, salt, iterations)
-    print("SALT: " + BinToHex(salt))
-    print("HASH: " + BinToHex(newPwdHash))
-    Insert('pwd', (
-            ('usr_id', usrId),
-            ('method', method),
-            ('salt', salt),
-            ('hash', newPwdHash),
-        ))
-
-def CheckLogin():
-    if not 'usr' in flask.session:
-        app.logger.debug("No username.")
+        return flask.session['usr']
+    except KeyError:
+        app.logger.debug("User not logged in.")
         flask.abort(401)
 
 def InvokeService(function):
-    CheckLogin()
+    GetLoggedInUser()
     try:
         response = function()
     except EntityNotFoundException as e:
@@ -108,7 +72,7 @@ def GetUserRoute(userId):
     return InvokeService(lambda: GetUser(userId))
 
 def GetUser(userId):
-    CheckLogin()
+    GetLoggedInUser()
     usr = Query1("select * from v_usr where id = %s", usrId)
     result = ResultToDict(usr)
     return ToJson(result)

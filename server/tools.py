@@ -3,7 +3,7 @@
 
 import sys
 from collections import deque
-from . import server
+from . import server, auth
 
 USAGE = """
 USAGE: dbtools.py set pwd <usr_id> <password>
@@ -19,7 +19,7 @@ def Run():
                 if what == 'pwd':
                     usrId = args[2]
                     password = args[3]
-                    server.StorePassword(usrId, password)
+                    auth.StoreCleartextPassword(usrId, password)
                 else:
                     print("Don't know how to set '%s'." % what, file=sys.stderr)
             except IndexError:

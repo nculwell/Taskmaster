@@ -54,6 +54,20 @@ create table tsk (
   primary key (id)
 );
 
+create table tsk_relation_type (
+  id int,
+  deleted boolean not null default false,
+  name varchar(20) not null,
+  primary key (id)
+);
+
+create table tsk_relation (
+  tsk_id int not null references tsk(id),
+  related_tsk_id int not null references tsk(id),
+  tsk_relation_type_id not null references tsk_relation_type(id),
+  primary key (tsk_id, related_tsk_id, tsk_relation_type_id)
+);
+
 create table tsk_usr_role (
   id int,
   deleted boolean not null default false,
