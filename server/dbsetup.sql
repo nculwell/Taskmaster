@@ -11,7 +11,7 @@ create table usr (
   primary key (id)
 );
 
-create unique index usr_username_unique on usr (username);
+create unique index usr_username_unique on usr(username);
 
 create table pwd (
   usr_id int references usr(id),
@@ -68,7 +68,7 @@ create table tsk_usr (
   primary key (tsk_id, tsk_usr_role_id, usr_id)
 );
 
-create index tsk_usr_usr_id on tsk_usr (usr_id);
+create index tsk_usr__usr_id on tsk_usr(usr_id);
 
 -- VIEWS
 
