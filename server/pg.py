@@ -51,17 +51,31 @@ def Query1(sql, params=()):
         conn.close()
 
 def Insert(tableName, colVals):
-    cols = [ cv[0] for cv in colVals ]
-    vals = [ cv[1] for cv in colVals ]
+    cols, vals = SplitColVals(colVals)
     sql = 'insert into %s (%s) values (%s)' % (
         tableName, ', '.join(cols),
         ', '.join('%s' for x in range(len(vals)))
     )
     #print(sql + ' -- ' + '; '.join((str(v) for v in vals)))
+    return _ExecuteNonquery(sql, vals)
+
+# optimisticColVals: For a where clause that does optimistic
+#   concurrency.
+def Update(tableName, colVals, whereClause):
+    cols, vals = SplitColVals(colVals)
+    sets = [ '%s = %%s' % c for c in cols ]
+    sql = "update %s set %s where " % (tableName, ', '.join(sets))
+    where = ['(1=1)']
+    for col, val in whereClause:
+        where.append('(%s=%s)' % (col, val))
+    sql += ' and '.join(where)
+    rowsUpdated = _ExecuteNonquery(sql, vals)
+
+def _ExecuteNonquery(sql, args):
     conn = _Connect()
     try:
         cur = conn.cursor()
-        cur.execute(sql, vals)
+        cur.execute(sql, args)
         if DEBUG_PRINT:
             print(cur.query)
             print(cur.statusmessage)
@@ -71,6 +85,11 @@ def Insert(tableName, colVals):
         return rowcount
     finally:
         conn.close()
+
+def SplitColVals(colVals):
+    cols = [ cv[0] for cv in colVals ]
+    vals = [ cv[1] for cv in colVals ]
+    return (cols, vals)
 
 def ResultToDict(result):
     return { k: v for k, v in result.items() }

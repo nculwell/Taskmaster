@@ -33,8 +33,20 @@ create table doc (
   id serial,
   doc_type_id int not null references doc_type(id),
   body text not null,
+  revision_note varchar(250) not null,
+  revision_number int not null default 1,
+  revision_ts timestamp not null default current_timestamp,
   create_ts timestamp not null default current_timestamp,
   primary key (id)
+);
+
+create table doc_hx (
+  doc_id int not null references doc(id),
+  diff text not null,
+  revision_note varchar(250) not null,
+  revision_number int not null,
+  revision_ts timestamp not null,
+  primary key (doc_id, revision_number)
 );
 
 create table task_type (
@@ -52,6 +64,13 @@ create table tsk (
   desc_doc_id int not null references doc(id),
   create_ts timestamp not null default current_timestamp,
   primary key (id)
+);
+
+create table tsk_comment (
+  tsk_id int references tsk(id),
+  tsk_comment_doc_id int references doc(id),
+  deleted boolean not null default false,
+  primary key (tsk_id, tsk_comment_doc_id)
 );
 
 create table tsk_relation_type (
