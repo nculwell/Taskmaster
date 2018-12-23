@@ -89,7 +89,8 @@ create index tsk_usr__usr_id on tsk_usr(usr_id);
 create view v_usr as
   select u.id, u.username, u.fullname
   from usr u
-  where not u.deleted;
+  where not u.deleted
+;
 
 create view v_tsk as
   select
@@ -101,14 +102,26 @@ create view v_tsk as
 ;
 
 create view v_tsk_usr as
-  select t.*
+  select
+    t.*
+  , tu.tsk_id
   , tu.tsk_usr_role_id, tur.name tsk_usr_role_name
-  , tu.usr_id, u.username, u.fullname
+  , tu.usr_id
+  , u.username, u.fullname
   from v_tsk t
-  join tsk_usr tu on tu.tsk_id = t.tsk_id
+  join tsk_usr tu on tu.tsk_id = t.id
   join tsk_usr_role tur on tur.id = tu.tsk_usr_role_id
   join usr u on u.id = tu.usr_id
   where not u.deleted
+;
+
+create view v_tsk_relation as
+  select
+    tr.tsk_id, tr.related_tsk_id
+  , tr.tsk_relation_type_id, trt.name tsk_relation_name
+  from v_tsk t
+  join tsk_relation tr on tr.tsk_id = t.id
+  join tsk_relation_type_id trt on trt.id = tr.tsk_relation_type_id
 ;
 
 -- STATIC DEFINITIONS

@@ -9,20 +9,25 @@ PASSWORD_HASH = 'sha256'
 PASSWORD_SALT_BYTES = 16
 PASSWORD_ITERATIONS_THOUSANDS = 200
 
+# FIXME: Add real logging.
+_log = print
+
+class AuthFailedError(Exception):
+    pass
+
 def AuthenticateUser(username, pwdSha256):
     try:
         usr = Query1("select * from v_usr where username = %s", username)
     except EntityNotFoundException:
-        print("User not found: %s" % username, file=sys.stderr)
-        return None
+        raise AuthFailedError("User not found: " + username)
     pwdSql = """
         select p.* from pwd p where p.usr_id = %s
         order by p.create_ts desc limit 1
     """
     pwd = Query1(pwdSql, usr['id'])
     if not _VerifyPassword(pwd['method'], pwd['salt'], pwd['hash'], pwdSha256):
-        print("Password not matched for user: %s" % username, file=sys.stderr)
-        return None
+        raise AuthFailedError("Password not matched for user: " + username)
+    _log("User authenticated: " + username)
     return usr
 
 def _VerifyPassword(method, salt, storedPwdHash, pwdSha256):

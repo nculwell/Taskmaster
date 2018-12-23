@@ -42,14 +42,15 @@ def Login():
         raise Exception("Username not found.")
     if pwdSha256Hex == '':
         raise Exception("Password not found.")
-    print('PASSWORD', pwdSha256Hex)
+    #print('PASSWORD', pwdSha256Hex)
     pwdSha256 = HexToBin(pwdSha256Hex)
-    loginUsr = auth.AuthenticateUser(username, pwdSha256)
-    if loginUsr is None:
+    try:
+        loginUsr = auth.AuthenticateUser(username, pwdSha256)
+    except auth.AuthFailedError as e:
+        print(e, file=sys.stderr)
         flask.abort(401)
-    else:
-        flask.session['usr'] = username
-        return ToJson(ResultToDict(loginUsr))
+    flask.session['usr'] = username
+    return ToJson(ResultToDict(loginUsr))
 
 def GetLoggedInUser():
     try:
