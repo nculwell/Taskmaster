@@ -30,16 +30,66 @@ def DiffFiles(filename1, filename2):
         lines2 = f.readlines()
     return Diff(lines1, lines2)
 
-def Diff2(lines1, lines2):
-    diff = difflib.compare(lines1, lines2)
-    sys.stdout.writelines(diff)
-
 def Diff(lines1, lines2):
     diff = difflib.unified_diff(lines1, lines2, n=0)
-    for i in range(2):
-        next(diff)
     lines = ( x for x in diff if not x.startswith('+') )
-    sys.stdout.writelines(lines)
+    parsed = ParseDiff(lines)
+    return parsed
+
+def ApplyDiff(source, diff):
+    source = _Lines(source)
+    diff = _Lines(diff)
+    srcIter = iter(source)
+    srcLine = 1
+    result = []
+    for delta in diff:
+        _, (deltaStart, deltaLength), deltaLines = delta
+        while srcLine < deltaStart:
+            result.append(next(srcIter))
+            srcLine += 1
+        result.extend(deltaLines)
+        while srcLine < deltaStart + deltaLength:
+            discard = next(srcIter)
+            srcLine += 1
+    return result
+
+def ParseDiff(diff):
+    print("ParseDiff")
+    d = iter(diff)
+    line = next(d)
+    while not line.startswith('@'):
+        #print("SKIP", line)
+        line = next(d)
+    chunk = []
+    while True:
+        fr, to = _ParseLineNumbers(line)
+        try:
+            line = next(d)
+            while line.startswith('-'):
+                chunk.append(line[1:])
+                line = next(d)
+            yield (fr, to, chunk)
+            chunk = []
+        except StopIteration:
+            yield (fr, to, chunk)
+            return
+        except:
+            raise
+
+def _ParseLineNumbers(line):
+    line = line.strip()
+    #print("PARSING:", line)
+    numbers = line.split()[1:][:2]
+    #print("P2", numbers)
+    numLens = [ (n[1:].split(',') + [1])[:2] for n in numbers ]
+    #print("P3", numLens)
+    return ( [ int(m) for m in n ] for n in numLens )
+
+def _Lines(arg):
+    if isinstance(arg, str):
+        return arg.split('\n')
+    else:
+        return arg
 
 BLOCK_TAGS = set((
     'div', 'ul', 'ol', 'p',
@@ -85,5 +135,9 @@ if __name__ == '__main__':
     text = MarkdownToText(md)
     print(text)
     print('----------')
-    DiffFiles('wsserv.py', 'diff-wss.py')
+    diff = DiffFiles('wsserv.py', 'diff-wss.py')
+    #parsed = ParseDiff(diff)
+    for line in diff:
+        print(line)
+    #sys.stdout.writelines(diff)
 
