@@ -1,14 +1,13 @@
 #!/usr/bin/python3
 
-import curses
+import curses, urllib
 import curses.ascii
 import curses.textpad
+from client import net
 
 keys = ''
-displayWin = None
 
-def start(stdscr):
-    global displayWin
+def start(stdscr, usr):
     stdscr.clear()
     ENTRY_WINDOW_HEIGHT = 2
     displayWin = curses.newwin(curses.LINES - ENTRY_WINDOW_HEIGHT - 1, curses.COLS-1, 0, 0)
@@ -23,6 +22,28 @@ def start(stdscr):
     kk = entryWin.getkey()
     if kk == ':':
         cmd = readCommand(entryWin)
+
+def login():
+    import getpass 
+    username = input("Username: ")
+    if username == "":
+        return False
+    password = getpass.getpass("Password: ")
+    if password == "":
+        return False
+    try:
+        usr = net.Login(username, password)
+        return usr
+    except urllib.error.HTTPError as e:
+        # urllib.error.HTTPError: HTTP Error 401: UNAUTHORIZED
+        if str(e).startswith('HTTP Error 401:'):
+            print("Bad username/password.")
+        else:
+            traceback.print_exc()
+        return False
+    except urllib.error.URLError as e:
+        print("Unable to connect to server:", e)
+        return False
 
 def readCommand(entryWin):
     tp = curses.textpad.Textbox(entryWin)
@@ -54,11 +75,13 @@ def readCmd(ew):
         c = c + 1
 
 def main():
-    curses.wrapper(start)
-
-if __name__ == "__main__":
     try:
-        main()
+        usr = login()
+        if usr:
+            curses.wrapper(start, usr)
     finally:
         print(keys)
+
+if __name__ == "__main__":
+    main()
 
