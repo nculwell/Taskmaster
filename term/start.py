@@ -5,20 +5,35 @@ import curses.ascii
 import curses.textpad
 
 keys = ''
+displayWin = None
 
 def start(stdscr):
+    global displayWin
     stdscr.clear()
-    displayDim = { 'h': curses.LINES-3, 'w': curses.COLS, 'y': 0, 'x': 0 }
-    entryDim = { 'h': 2, 'w': curses.COLS-2, 'y': curses.LINES-2, 'x': 1 }
-    displayWin = curses.newwin(displayDim['h'], displayDim['w'], displayDim['y'], displayDim['x'])
-    entryWin = curses.newwin(entryDim['h'], entryDim['w'], entryDim['y'], entryDim['x'])
-    stdscr.addstr(curses.LINES-3, 0, '='*curses.COLS)
+    ENTRY_WINDOW_HEIGHT = 2
+    displayWin = curses.newwin(curses.LINES - ENTRY_WINDOW_HEIGHT - 1, curses.COLS-1, 0, 0)
+    dividerWin = curses.newwin(1, curses.COLS, curses.LINES - ENTRY_WINDOW_HEIGHT - 1, 0)
+    entryWin = curses.newwin(ENTRY_WINDOW_HEIGHT, curses.COLS-3, curses.LINES - ENTRY_WINDOW_HEIGHT, 1)
+    dividerWin.addstr(0, 0, '='*(curses.COLS-1))
+    dividerWin.refresh()
     #entryWin.move(1, 1)
     entryWin.keypad(True)
     displayWin.refresh()
     #cmd = readCmd(entryWin)
+    kk = entryWin.getkey()
+    if kk == ':':
+        cmd = readCommand(entryWin)
+
+def readCommand(entryWin):
     tp = curses.textpad.Textbox(entryWin)
-    tp.edit()
+    return tp.edit(handleEntryKey)
+
+def handleEntryKey(k):
+    if k == 7:
+        return -1
+    if k == 10:
+        return 7
+    return k
 
 def readCmd(ew):
     global keys
