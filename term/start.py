@@ -5,9 +5,10 @@ import curses.ascii
 import curses.textpad
 from client import net
 
-keys = ''
+output = ''
 
 def start(stdscr, usr):
+    global output
     stdscr.clear()
     ENTRY_WINDOW_HEIGHT = 2
     displayWin = curses.newwin(curses.LINES - ENTRY_WINDOW_HEIGHT - 1, curses.COLS-1, 0, 0)
@@ -22,6 +23,19 @@ def start(stdscr, usr):
     kk = entryWin.getkey()
     if kk == ':':
         cmd = readCommand(entryWin)
+    tasks = loadTasks(usr)
+    output = str(tasks)
+    ln = 1
+    for t in tasks:
+        disp = "%03d %s" % (t['tsk_id'], t['title'])
+        output = disp
+        displayWin.addstr(0+ln, 0, disp)
+    displayWin.refresh()
+    entryWin.getch()
+
+def loadTasks(usr):
+    tasks = net.CallService("task/user/" + str(usr['id']))
+    return tasks
 
 def login():
     import getpass 
@@ -33,6 +47,7 @@ def login():
         return False
     try:
         usr = net.Login(username, password)
+        print(usr)
         return usr
     except urllib.error.HTTPError as e:
         # urllib.error.HTTPError: HTTP Error 401: UNAUTHORIZED
@@ -80,7 +95,7 @@ def main():
         if usr:
             curses.wrapper(start, usr)
     finally:
-        print(keys)
+        print(output)
 
 if __name__ == "__main__":
     main()

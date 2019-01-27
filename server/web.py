@@ -68,11 +68,11 @@ def InvokeService(function):
         flask.abort(404, "Entity not found.")
     return ToJson(response)
 
-@app.route('/user/<userId>')
-def GetUserRoute(userId):
-    return InvokeService(lambda: GetUser(userId))
+@app.route('/user/<usrId>')
+def GetUserRoute(usrId):
+    return InvokeService(lambda: GetUser(usrId))
 
-def GetUser(userId):
+def GetUser(usrId):
     GetLoggedInUser()
     usr = Query1("select * from v_usr where id = %s", usrId)
     result = ResultToDict(usr)
@@ -89,11 +89,52 @@ def GetTask(taskId):
     result['roles'] = ResultsToDicts(roles)
     return result
 
-@app.route('/task/user/<userId>')
+@app.route('/task/user/<usrId>')
 def GetTasksByUserRoute(usrId):
     return InvokeService(lambda: GetTasksByUser(usrId))
 
+TaskKeys = 'tsk_id tsk_type_id tsk_type_name title desc_doc_id'.split()
+UsrRoleKeys = 'tsk_usr_role_id tsk_usr_role_name usr_id username fullname'.split()
+
 def GetTasksByUser(usrId):
     results = Query("select * from v_tsk_usr where usr_id = %s", usrId)
-    return ResultsToDicts(results)
+    rd = ResultsToDicts(results)
+    # Roll up task users
+    tasks = {}
+    for t in rd:
+        tskId = t['tsk_id']
+        if tskId in tasks:
+            tsk = tasks[tskId]
+        else:
+            tsk = ExtractKeys(t, TaskKeys)
+            print("tsk", tsk)
+            tsk['usr_roles'] = []
+            tasks[tskId] = tsk
+        usrRole = ExtractKeys(t, UsrRoleKeys)
+        print("usrRole", usrRole)
+        tsk['usr_roles'].append(usrRole)
+    taskList = sorted(tasks.values(), key = lambda t: t['tsk_id'])
+    return taskList
+
+def ExtractKeys(fromDict, keys):
+    toDict = {}
+    for k in keys:
+        toDict[k] = fromDict[k]
+    return toDict
+
+def RollUp(dicts, primaryKey, separateKeysNode, combinedKeys, separateKeys):
+    if not primaryKey in combinedKeys:
+        combinedKeys = combinedKeys + [primaryKey]
+    rollup = {}
+    for d in dicts:
+        pk = d[primaryKey]
+        if pk in rollup:
+            rec = rollup[pk]
+        else:
+            rec = ExtractKeys(d, combinedKeys)
+            rec[separateKeysNode] = []
+            rollup[pk] = rec
+        sep = ExtractKeys(d, separateKeys)
+        rec[separateKeysNode].append(sep)
+    return rollup.values()
 
