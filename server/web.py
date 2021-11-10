@@ -99,22 +99,9 @@ UsrRoleKeys = 'tsk_usr_role_id tsk_usr_role_name usr_id username fullname'.split
 def GetTasksByUser(usrId):
     results = Query("select * from v_tsk_usr where usr_id = %s", usrId)
     rd = ResultsToDicts(results)
-    # Roll up task users
-    tasks = {}
-    for t in rd:
-        tskId = t['tsk_id']
-        if tskId in tasks:
-            tsk = tasks[tskId]
-        else:
-            tsk = ExtractKeys(t, TaskKeys)
-            print("tsk", tsk)
-            tsk['usr_roles'] = []
-            tasks[tskId] = tsk
-        usrRole = ExtractKeys(t, UsrRoleKeys)
-        print("usrRole", usrRole)
-        tsk['usr_roles'].append(usrRole)
-    taskList = sorted(tasks.values(), key = lambda t: t['tsk_id'])
-    return taskList
+    tasks = RollUp(rd, 'tsk_id', 'usr_roles', TaskKeys, UsrRoleKeys)
+    print(tasks)
+    return tasks
 
 def ExtractKeys(fromDict, keys):
     toDict = {}
@@ -136,5 +123,5 @@ def RollUp(dicts, primaryKey, separateKeysNode, combinedKeys, separateKeys):
             rollup[pk] = rec
         sep = ExtractKeys(d, separateKeys)
         rec[separateKeysNode].append(sep)
-    return rollup.values()
+    return list(rollup.values())
 

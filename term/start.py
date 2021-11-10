@@ -24,6 +24,7 @@ def start(stdscr, usr):
     if kk == ':':
         cmd = readCommand(entryWin)
     tasks = loadTasks(usr)
+    tasks.sort(key = lambda t: t['tsk_id'])
     output = str(tasks)
     ln = 1
     for t in tasks:
